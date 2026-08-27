@@ -77,6 +77,25 @@ keystore does not belong in a repository.
 |---|---|---|
 | [`web.yml`](.github/workflows/web.yml) | changes under `web-admin/` | `tsc --noEmit`, `eslint`, `next build` |
 | [`mobile.yml`](.github/workflows/mobile.yml) | changes under `mobile_app/` | `flutter analyze`, `flutter test`, release APK artifact |
+| [`deploy.yml`](.github/workflows/deploy.yml) | pushes to `main` touching `web-admin/` | `vercel deploy --prod` |
+
+Both CI workflows carry a `paths:` filter, and GitHub cannot diff the push that
+*creates* a branch — so the very first push to a new branch runs neither. Use
+**Run workflow** on the Actions tab, or push again.
+
+`deploy.yml` needs one repository secret, `VERCEL_TOKEN` (create at
+<https://vercel.com/account/tokens>, add under *Settings → Secrets and
+variables → Actions*). Without it the job explains itself in the run summary
+and skips rather than failing. The org and project ids in the workflow are
+identifiers, not secrets. **No Firebase or Razorpay credential passes through
+Actions** — those live on the Vercel project.
+
+Vercel's own Git integration is connected to this repository and reports a
+check back to each commit, but on this account's Hobby plan the deployments it
+creates come back `BLOCKED`: the record is written and the build never starts.
+`deploy.yml` exists because deploying with the CLI and a token sidesteps the
+integration. If the plan changes, the integration can take over and this
+workflow can be deleted.
 
 Neither workflow needs a credential. The web build runs with no Firebase
 config at all, because `src/lib/firebase/config.ts` falls back to inert

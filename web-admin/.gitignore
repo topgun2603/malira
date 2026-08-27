@@ -48,3 +48,6 @@ service-account.json
 service-account*.json
 *-service-account.json
 serviceAccount*.json
+
+.vercel
+.env*

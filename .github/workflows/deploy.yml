@@ -1,0 +1,64 @@
+name: deploy
+
+on:
+  push:
+    branches: [main]
+    paths: ["web-admin/**", ".github/workflows/deploy.yml"]
+  workflow_dispatch:
+
+# Never let two deploys race to production. Unlike the CI workflows this one
+# does not cancel the in-flight run: a half-finished deploy is worse than a
+# redundant one.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  vercel:
+    runs-on: ubuntu-latest
+    environment:
+      name: production
+      url: https://nilgiri-news.vercel.app
+
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      # Identifiers, not secrets — they name the project, they do not grant
+      # access to it. Only VERCEL_TOKEN has to be a repository secret.
+      VERCEL_ORG_ID: team_ZPRgBhLQNifxNotAjjGEtCbr
+      VERCEL_PROJECT_ID: prj_OtZhB6OeWnEDSL1BCSEQfIVxNQua
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Vercel's own Git integration is connected to this repository and does
+      # report a check back to the commit, but on this account's Hobby plan the
+      # deployments it creates come back BLOCKED: the record is written and the
+      # build never starts. Deploying with the CLI and a token sidesteps the
+      # integration, and is the path proven to reach production here.
+      - name: Is a token configured?
+        id: gate
+        run: |
+          if [ -z "$VERCEL_TOKEN" ]; then
+            {
+              echo "### Deploy skipped"
+              echo
+              echo 'No `VERCEL_TOKEN` repository secret is set, so there is nothing to deploy with.'
+              echo 'Create one at <https://vercel.com/account/tokens> and add it under'
+              echo 'Settings → Secrets and variables → Actions.'
+            } >> "$GITHUB_STEP_SUMMARY"
+            echo "ok=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ok=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Deploy to production
+        if: steps.gate.outputs.ok == 'true'
+        working-directory: web-admin
+        run: |
+          set -euo pipefail
+          # Environment variables live on the Vercel project, not here, so no
+          # Firebase or Razorpay credential ever passes through Actions.
+          url=$(npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN")
+          echo "Deployed to $url"
+          echo "- Deployment: $url" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Alias: <https://nilgiri-news.vercel.app>" >> "$GITHUB_STEP_SUMMARY"
