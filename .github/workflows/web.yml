@@ -6,6 +6,10 @@ on:
     paths: ["web-admin/**", ".github/workflows/web.yml"]
   pull_request:
     paths: ["web-admin/**", ".github/workflows/web.yml"]
+  # Run it by hand. Also the way to get a green tick on a branch whose commits
+  # only touched the other half of the repo, since the paths filter above
+  # deliberately skips those.
+  workflow_dispatch:
 
 # A second push to the same branch cancels the first; nobody needs the results
 # of a commit that has already been superseded.
