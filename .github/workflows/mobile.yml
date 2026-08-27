@@ -1,0 +1,58 @@
+name: mobile_app
+
+on:
+  push:
+    branches: [main]
+    paths: ["mobile_app/**", ".github/workflows/mobile.yml"]
+  pull_request:
+    paths: ["mobile_app/**", ".github/workflows/mobile.yml"]
+
+concurrency:
+  group: mobile-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: mobile_app
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # flutter_local_notifications pulls in core library desugaring, which
+      # needs a JDK the Android Gradle Plugin is happy with.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - uses: subosito/flutter-action@v2
+        with:
+          # Pinned to the version the app is developed against. Floating on
+          # "stable" turns an upstream release into a surprise red build.
+          flutter-version: "3.41.7"
+          channel: stable
+          cache: true
+
+      - run: flutter pub get
+
+      - name: Analyze
+        run: flutter analyze
+
+      - name: Test
+        run: flutter test
+
+      # Debug signing keys, same as a local build. This artifact is for putting
+      # a build on a tester's phone, not for the Play Store — release signing
+      # needs a keystore, and a keystore does not belong in a repository.
+      - name: Build APK
+        run: flutter build apk --release --split-per-abi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nilgiri-news-apk
+          path: mobile_app/build/app/outputs/flutter-apk/*-release.apk
+          if-no-files-found: error
+          retention-days: 14

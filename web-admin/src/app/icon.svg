@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="32" height="32" role="img" aria-label="Nilgiri News">
+  <!-- Hill blue, the same #145892 the news sections carry. -->
+  <rect width="32" height="32" rx="7" fill="#145892"/>
+  <!-- Lucide's mountain glyph, filled rather than stroked: a 2px stroke
+       disappears at 16px, which is the size that actually matters here. -->
+  <g transform="translate(5.5 5.5) scale(0.875)">
+    <path d="m8 3 4 8 5-5 5 15H2L8 3z" fill="#ffffff"/>
+  </g>
+</svg>

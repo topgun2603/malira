@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "418553143127",
+    "project_id": "nilgiri-news",
+    "storage_bucket": "nilgiri-news.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:418553143127:android:0b1ea8eaf924ac410e6812",
+        "android_client_info": {
+          "package_name": "com.nilgirinews.nilgiri_news"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "418553143127-17fsodab570hpgh7apralhsl593o4ast.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.nilgirinews.nilgiri_news",
+            "certificate_hash": "721313e21d47e7b578e1b625511ab4103ea00a24"
+          }
+        },
+        {
+          "client_id": "418553143127-srep8q018ub7nnifisie6q3hlagcbpl9.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDHa9wDUfsS9sG1J6DNuv_xLHrL3JfMwlg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "418553143127-srep8q018ub7nnifisie6q3hlagcbpl9.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -1,0 +1,91 @@
+name: nilgiri_news
+description: "Nilgiri News — news, events and songs for the Badaga community of the Nilgiris."
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Firebase — the app reads the same Firestore collections the web admin writes.
+  firebase_core: ^4.4.0
+  cloud_firestore: ^6.1.0
+  # Matrimony is the only part of the app behind an account. Everything the
+  # newsroom publishes stays readable without one.
+  firebase_auth: ^6.2.0
+  # Matrimony photographs. Article images are uploaded from the admin panel;
+  # these are the one thing a member uploads from their own phone.
+  firebase_storage: ^13.0.0
+  # Push. Topic-based, so a reader with no account still gets the news.
+  firebase_messaging: ^16.0.0
+  flutter_local_notifications: ^19.0.0
+
+  # State
+  flutter_riverpod: ^3.0.4
+
+  # Routing
+  go_router: ^17.0.0
+
+  # Photo upload
+  image_picker: ^1.2.0
+  flutter_image_compress: ^2.4.0
+
+  # UI
+  # Pulled back in because the release build reported a missing font for
+  # CupertinoIcons: something in the widget tree reaches for it, and without
+  # the package those glyphs render as empty boxes.
+  cupertino_icons: ^1.0.8
+  cached_network_image: ^3.4.1
+  flutter_html: ^3.0.0
+  shimmer: ^3.0.0
+
+  # Grapheme clusters. A Tamil name begins with a base letter plus combining
+  # vowel signs, so `name[0]` would slice a character in half; `.characters`
+  # takes the whole cluster. Declared explicitly because the models use it
+  # without importing Flutter.
+  characters: ^1.4.1
+
+  # Platform
+  shared_preferences: ^2.5.3
+  url_launcher: ^6.3.2
+  share_plus: ^13.0.0
+  intl: ^0.20.2
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
+
+  # Bundled, not fetched at runtime. The audience is rural and often on a poor
+  # connection; typography that depends on a successful network call is
+  # typography that sometimes is not there.
+  fonts:
+    # Latin. Same face as the admin panel.
+    - family: Geist
+      fonts:
+        - asset: assets/fonts/Geist-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/Geist-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/Geist-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/Geist-Bold.ttf
+          weight: 700
+    # Tamil. Reached through fontFamilyFallback, never selected by hand, so a
+    # bilingual headline keeps one optical weight across both scripts.
+    - family: NotoSansTamil
+      fonts:
+        - asset: assets/fonts/NotoSansTamil-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/NotoSansTamil-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/NotoSansTamil-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/NotoSansTamil-Bold.ttf
+          weight: 700

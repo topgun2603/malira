@@ -1,0 +1,45 @@
+name: web-admin
+
+on:
+  push:
+    branches: [main]
+    paths: ["web-admin/**", ".github/workflows/web.yml"]
+  pull_request:
+    paths: ["web-admin/**", ".github/workflows/web.yml"]
+
+# A second push to the same branch cancels the first; nobody needs the results
+# of a commit that has already been superseded.
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web-admin
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: web-admin/package-lock.json
+
+      - run: npm ci
+
+      # No NEXT_PUBLIC_FIREBASE_* values are set here, and that is deliberate:
+      # src/lib/firebase/config.ts falls back to inert placeholders when the
+      # project is unconfigured, so the build exercises every page without any
+      # credential reaching CI. Vercel supplies the real values at deploy time.
+      - name: Typecheck
+        run: npx tsc --noEmit
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Build
+        run: npm run build

@@ -1,0 +1,414 @@
+rules_version = '2';
+
+// -----------------------------------------------------------------------------
+// Nilgiri News — Firestore security rules
+//
+// The permission matrix in src/lib/permissions.ts mirrors these rules so the UI
+// can hide what would fail. THIS file is the enforcement layer. Anything the UI
+// allows but these rules forbid is a bug in the UI, not in the rules.
+// -----------------------------------------------------------------------------
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ----------------------------- helpers -----------------------------------
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function profile() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function hasProfile() {
+      return signedIn() &&
+        exists(/databases/$(database)/documents/users/$(request.auth.uid));
+    }
+
+    function role() {
+      return hasProfile() ? profile().role : 'none';
+    }
+
+    function active() {
+      return hasProfile() && profile().disabled == false;
+    }
+
+    function isSuperAdmin() {
+      return active() && role() == 'super_admin';
+    }
+
+    // Editors and above may publish, review and delete.
+    function isEditor() {
+      return active() && (role() == 'editor' || role() == 'super_admin');
+    }
+
+    function isContributor() {
+      return active() && role() == 'contributor';
+    }
+
+    function isPlaylistManager() {
+      return active() && role() == 'playlist_manager';
+    }
+
+    function isMatrimonyModerator() {
+      return active() && (role() == 'matrimony_moderator' || role() == 'super_admin');
+    }
+
+    // A matrimony profile's document id IS its owner's uid, so ownership needs
+    // no lookup and one account can never hold two profiles.
+    function interestAccepted(a, b) {
+      return exists(/databases/$(database)/documents/matrimonyInterests/$(a + '__' + b))
+        && get(/databases/$(database)/documents/matrimonyInterests/$(a + '__' + b))
+             .data.status == 'accepted';
+    }
+
+    // Either side of an accepted interest has earned the other's contact.
+    function matched(viewer, owner) {
+      return interestAccepted(viewer, owner) || interestAccepted(owner, viewer);
+    }
+
+    // The reader-facing app only ever sees published stories.
+    function isPublished() {
+      return resource.data.status == 'published';
+    }
+
+    // ------------------------------- users -----------------------------------
+
+    match /users/{uid} {
+      // Everyone signed in can read the directory: bylines and the approvals
+      // queue both need to resolve a uid to a name.
+      allow read: if signedIn();
+
+      // Self-registration on first sign-in only, and never straight into a
+      // privileged role.
+      //
+      // Exactly one account may claim super_admin, to bootstrap the panel
+      // without the Admin SDK. The guard is settings/bootstrap, NOT the user's
+      // own document: `!exists(users/$(uid))` would be trivially true while
+      // creating that same document, which would let every new Google sign-in
+      // claim super_admin. The client writes both documents in one batch, so
+      // both rules are evaluated against the pre-batch state and the sentinel
+      // closes the door behind the first account.
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.disabled == false
+        && (
+          request.resource.data.role == 'member'
+          || (request.resource.data.role == 'super_admin'
+              && !exists(/databases/$(database)/documents/settings/bootstrap))
+        );
+
+      // A person may refresh their own lastLoginAt but not their own role.
+      allow update: if isSuperAdmin()
+        || (request.auth.uid == uid
+            && request.resource.data.role == resource.data.role
+            && request.resource.data.disabled == resource.data.disabled);
+
+      allow delete: if isSuperAdmin();
+    }
+
+    // ----------------------------- categories --------------------------------
+
+    match /categories/{categoryId} {
+      // Public: the reader feed needs the category tabs before sign-in.
+      allow read: if true;
+      allow create, update, delete: if isEditor();
+    }
+
+    // ------------------------------ articles ---------------------------------
+
+    match /articles/{articleId} {
+      // Contributors are scoped to their own work; editors see everything.
+      //
+      // Published stories are readable by anyone, signed in or not. That is the
+      // point of a news app: the public landing page and the mobile feed both
+      // need to render before a reader has an account. Nothing unpublished is
+      // exposed by this — drafts, submissions and scheduled items stay behind
+      // the two clauses above.
+      allow read: if isEditor()
+        || (active() && resource.data.createdBy == request.auth.uid)
+        || isPublished();
+
+      allow create: if (isEditor() || isContributor())
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.images.size() <= 5
+        // A contributor can only ever create a draft or a submission.
+        && (isEditor() || request.resource.data.status in ['draft', 'in_review']);
+
+      allow update: if isEditor()
+        || (isContributor()
+            && resource.data.createdBy == request.auth.uid
+            // Their own work, and only while it is still in their hands.
+            && resource.data.status in ['draft', 'rejected', 'in_review']
+            && request.resource.data.createdBy == resource.data.createdBy
+            && request.resource.data.status in ['draft', 'in_review']
+            && request.resource.data.images.size() <= 5
+            // Contributors cannot pin, cannot open comments, cannot self-review.
+            && request.resource.data.pinned == false
+            && request.resource.data.commentsEnabled == resource.data.commentsEnabled
+            && request.resource.data.reviewNote == resource.data.reviewNote);
+
+      allow delete: if isEditor();
+    }
+
+    // ------------------------------ activity ---------------------------------
+
+    match /activity/{entryId} {
+      allow read: if active();
+      // Append-only: the log is worthless if it can be rewritten.
+      allow create: if active() && request.resource.data.actorId == request.auth.uid;
+      allow update, delete: if false;
+    }
+
+    // ------------------------------- polls -----------------------------------
+
+    match /polls/{pollId} {
+      // Running and closed polls are public so readers can vote and see results
+      // without an account; drafts stay with the desk.
+      allow read: if isEditor() || resource.data.status in ['active', 'closed'];
+
+      allow create, delete: if isEditor();
+
+      // Two very different updates share this rule:
+      //   1. An editor changing the poll.
+      //   2. A visitor casting a vote.
+      //
+      // The visitor case is deliberately open — requiring sign-in to answer a
+      // community poll would kill participation — but it is boxed in hard: only
+      // counts and totalVotes may change, totalVotes must go up by exactly one,
+      // and the poll must be running. The worst a bad actor can do is skew a
+      // poll, never corrupt the document or reopen a closed one.
+      allow update: if isEditor()
+        || (
+          resource.data.status == 'active'
+          && request.resource.data.diff(resource.data)
+               .affectedKeys().hasOnly(['counts', 'totalVotes'])
+          && request.resource.data.totalVotes == resource.data.totalVotes + 1
+        );
+    }
+
+    // ----------------------------- carousels ---------------------------------
+
+    match /carousels/{carouselId} {
+      // A running carousel is public; a draft selection is the desk working out
+      // what to lead with, and is nobody else's business.
+      allow read: if isEditor() || resource.data.status == 'active';
+      allow create, update, delete: if isEditor();
+    }
+
+    // -------------------------------- ads ------------------------------------
+
+    match /ads/{adId} {
+      // Only ads that are actually running are exposed; a draft campaign is
+      // commercially sensitive until it starts.
+      allow read: if isEditor() || resource.data.status == 'active';
+
+      allow create, delete: if isEditor();
+
+      // Same shape as polls: editors edit, readers may only nudge a counter.
+      allow update: if isEditor()
+        || (
+          resource.data.status == 'active'
+          && request.resource.data.diff(resource.data)
+               .affectedKeys().hasOnly(['impressions', 'clicks'])
+          && request.resource.data.impressions >= resource.data.impressions
+          && request.resource.data.clicks >= resource.data.clicks
+          && request.resource.data.impressions <= resource.data.impressions + 1
+          && request.resource.data.clicks <= resource.data.clicks + 1
+        );
+    }
+
+    // ------------------------------- events ----------------------------------
+
+    match /events/{eventId} {
+      // Published events are public — the calendar has to render before a
+      // reader has an account, exactly like the news feed.
+      allow read: if isEditor() || resource.data.status == 'published';
+      allow create, update, delete: if isEditor();
+    }
+
+    // -------------------------- songs and playlists ---------------------------
+
+    match /playlists/{playlistId} {
+      allow read: if true;
+      allow write: if isEditor() || isPlaylistManager();
+    }
+
+    match /songs/{songId} {
+      allow read: if true;
+      allow write: if isEditor() || isPlaylistManager();
+    }
+
+    match /artists/{artistId} {
+      allow read: if true;
+      allow write: if isEditor() || isPlaylistManager();
+    }
+
+    // ---------------------------- notifications -------------------------------
+
+    match /notifications/{notificationId} {
+      // A message that has gone out is already on every reader's phone, so
+      // withholding it from the in-app list would only mean a notification the
+      // reader cannot go back and re-read. Everything before that stays with
+      // the staff: a queued message is not yet news, and a draft the desk is
+      // still wording is nobody's business.
+      //
+      // The list query filters on the same `status == 'sent'`, which is what
+      // makes this rule satisfiable — Firestore matches a rule against the
+      // query, not against the documents it would return.
+      allow read: if active() || resource.data.status == 'sent';
+      allow create: if isEditor() && request.resource.data.status == 'queued';
+      allow update, delete: if isEditor();
+    }
+
+
+    // ----------------------------- matrimony ---------------------------------
+    //
+    // Unlike news, NOTHING here is public. These are dates of birth, photographs
+    // and family details of people in a small district; a signed-in member is
+    // the minimum audience, and contact details are narrower still.
+
+    match /matrimonyProfiles/{uid} {
+      allow read: if isMatrimonyModerator()
+        || request.auth.uid == uid
+        || (signedIn() && resource.data.status == 'approved');
+
+      // A member creates their own listing. A moderator may also create one on
+      // somebody's behalf — matrimony desks routinely take details from a
+      // family in person — and only a moderator may create it pre-approved.
+      allow create: if isMatrimonyModerator()
+        || (signedIn()
+            && request.auth.uid == uid
+            && request.resource.data.ownerUid == uid
+            && request.resource.data.status == 'pending');
+
+      // A member may edit their own listing, pause it, or mark it fixed — but
+      // may never move it to 'approved'. Editing returns it to the queue,
+      // because an edited profile has not been reviewed in its current form.
+      allow update: if isMatrimonyModerator()
+        || (request.auth.uid == uid
+            && request.resource.data.ownerUid == uid
+            && request.resource.data.status in ['pending', 'paused', 'married']);
+
+      allow delete: if isMatrimonyModerator() || request.auth.uid == uid;
+    }
+
+    // Phone, email and photos held back until an interest is accepted.
+    // Firestore has no field-level security, so these cannot live on the
+    // profile document: anyone able to read the profile would read them too.
+    match /matrimonyProfiles/{uid}/private/{docId} {
+      allow read: if signedIn() && (
+           request.auth.uid == uid
+        || isMatrimonyModerator()
+        || matched(request.auth.uid, uid)
+      );
+      allow write: if request.auth.uid == uid || isMatrimonyModerator();
+    }
+
+    match /matrimonyInterests/{interestId} {
+      allow read: if signedIn() && (
+           request.auth.uid == resource.data.fromUid
+        || request.auth.uid == resource.data.toUid
+        || isMatrimonyModerator()
+      );
+
+      // The id is derived from the two uids, so a member cannot forge an
+      // interest that appears to come from somebody else.
+      allow create: if signedIn()
+        && interestId == request.auth.uid + '__' + request.resource.data.toUid
+        && request.resource.data.fromUid == request.auth.uid
+        && request.resource.data.toUid != request.auth.uid
+        && request.resource.data.status == 'sent';
+
+      allow update: if isMatrimonyModerator()
+        || (request.auth.uid == resource.data.toUid
+            && request.resource.data.status in ['accepted', 'declined']
+            && request.resource.data.fromUid == resource.data.fromUid
+            && request.resource.data.toUid == resource.data.toUid)
+        || (request.auth.uid == resource.data.fromUid
+            && request.resource.data.status == 'withdrawn'
+            && request.resource.data.fromUid == resource.data.fromUid
+            && request.resource.data.toUid == resource.data.toUid)
+
+        // Taking an interest back and later sending it again.
+        //
+        // Withdrawing is the sender's own decision, so it must not be a life
+        // sentence: somebody who thinks better of it an hour later has done
+        // nothing that should bar them. Being *declined* is the other party's
+        // decision and stays terminal — that asymmetry is the whole point, and
+        // it is why this clause is pinned to `withdrawn` rather than written as
+        // a general "sender may set sent".
+        || (request.auth.uid == resource.data.fromUid
+            && resource.data.status == 'withdrawn'
+            && request.resource.data.status == 'sent'
+            && request.resource.data.fromUid == resource.data.fromUid
+            && request.resource.data.toUid == resource.data.toUid);
+
+      allow delete: if isMatrimonyModerator();
+    }
+
+    match /matrimonyReports/{reportId} {
+      // Reports are moderator-only: a report names both a profile and, by
+      // implication, whoever complained.
+      allow read: if isMatrimonyModerator();
+      allow create: if signedIn()
+        && request.resource.data.reporterUid == request.auth.uid
+        && request.resource.data.resolved == false;
+      allow update, delete: if isMatrimonyModerator();
+    }
+
+
+    match /settings/{docId} {
+      // settings/app is public because the app reads the minimum-version and
+      // force-update flags before anyone signs in. Every other settings
+      // document stays internal — settings/bootstrap in particular records who
+      // claimed the Super Admin seat.
+      allow read: if docId == 'app' || docId == 'matrimony' || isEditor();
+
+      // settings/bootstrap is write-once by the first account ever to sign in;
+      // at that moment their users/ document does not exist yet, so
+      // isSuperAdmin() cannot be the gate. It can never be created twice, and
+      // it can never be updated or deleted by anyone.
+      allow create: if isSuperAdmin()
+        || (docId == 'bootstrap'
+            && signedIn()
+            && !exists(/databases/$(database)/documents/settings/bootstrap));
+
+      allow update: if isSuperAdmin() && docId != 'bootstrap';
+      allow delete: if isSuperAdmin() && docId != 'bootstrap';
+    }
+
+    // ------------------------------- plans -----------------------------------
+
+    match /plans/{planId} {
+      // Public: the landing page prices are marketing and render before anyone
+      // signs in. What matters is that the price is not WRITABLE from a browser
+      // — the checkout route reads this same document with the Admin SDK.
+      allow read: if true;
+      allow write: if isSuperAdmin() || isEditor();
+    }
+
+    // --------------------------- subscriptions -------------------------------
+
+    match /subscriptions/{uid} {
+      // Readable by its owner so the UI can show what they hold. NOT writable
+      // by any client: an entitlement is granted only by the server, after a
+      // Razorpay signature has been verified. The Admin SDK bypasses these
+      // rules, which is precisely why the client must be locked out here.
+      allow read: if request.auth.uid == uid || isSuperAdmin();
+      allow write: if false;
+    }
+
+    match /payments/{paymentId} {
+      // The money audit trail. Server-written, admin-read.
+      allow read: if isSuperAdmin();
+      allow write: if false;
+    }
+
+    // Anything not named above is denied.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

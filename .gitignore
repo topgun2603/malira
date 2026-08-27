@@ -1,0 +1,52 @@
+# ---------------------------------------------------------------- secrets --
+# Nothing that grants access to the project may be committed. The Firebase
+# service account bypasses every rule in firestore.rules and storage.rules, and
+# the Razorpay secret can move money. The NEXT_PUBLIC_ Firebase values are not
+# secrets — they are identifiers that ship in the browser bundle by design —
+# but they live in the same files, so the files go as a whole.
+.env
+.env.*
+!.env*.example
+*service-account*.json
+serviceAccount*.json
+*.pem
+*.p12
+
+# Android signing. A leaked keystore lets anyone publish an update that
+# replaces this app on a reader's phone.
+*.jks
+*.keystore
+key.properties
+
+# --------------------------------------------------------------- installs --
+node_modules/
+.pnp.*
+.pub-cache/
+
+# ----------------------------------------------------------- build output --
+.next/
+out/
+build/
+dist/
+coverage/
+*.tsbuildinfo
+next-env.d.ts
+.dart_tool/
+.flutter-plugins-dependencies
+.gradle/
+.cxx/
+app.*.symbols
+app.*.map.json
+
+# ---------------------------------------------------------------- tooling --
+.vercel
+*.log
+firebase-debug.log*
+.firebase/
+
+# ---------------------------------------------------------- os and editor --
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+*.iml
