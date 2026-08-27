@@ -1,0 +1,20 @@
+# One repo, two toolchains, and contributors on Windows and Linux both. Without
+# this, a file checked out on Windows comes back with CRLF and shows up as
+# wholly rewritten in the next diff.
+* text=auto eol=lf
+
+# Binary, so git never tries to "fix" the line endings inside them.
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.ico binary
+*.ttf binary
+*.otf binary
+*.jar binary
+*.apk binary
+*.keystore binary
+*.jks binary
+
+# Generated: collapse it in diffs and keep it out of language statistics.
+web-admin/package-lock.json linguist-generated=true -diff
