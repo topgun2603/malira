@@ -2,6 +2,8 @@
 
 The association's newsroom, in two halves that share one Firebase project.
 
+**Live:** <https://nilgiri-news.vercel.app>
+
 | | |
 |---|---|
 | [`web-admin/`](web-admin) | Next.js. The editorial desk *and* the public reader site. Deployed to Vercel. |
@@ -50,7 +52,9 @@ pretending to have worked.
 ## Deploying
 
 **web-admin → Vercel.** The project's Root Directory is `web-admin`, so Vercel
-builds only that folder and ignores the Flutter half. Pushing to `main`
+builds only that folder and ignores the Flutter half. Leaving it at the
+repository root is the one setting that breaks a monorepo deploy: the build
+looks for a `package.json` beside the Flutter project and finds none. Pushing to `main`
 deploys to production; every other branch and pull request gets its own preview
 URL. The environment variables above have to be set in *Project Settings →
 Environment Variables* — Vercel never reads `.env.local`.
