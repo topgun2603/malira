@@ -2,7 +2,7 @@
 
 The association's newsroom, in two halves that share one Firebase project.
 
-**Live:** <https://nilgiri-news.vercel.app>
+**Live:** <https://malira-rouge.vercel.app>
 
 | | |
 |---|---|
@@ -54,7 +54,21 @@ pretending to have worked.
 **web-admin → Vercel.** The project's Root Directory is `web-admin`, so Vercel
 builds only that folder and ignores the Flutter half. Leaving it at the
 repository root is the one setting that breaks a monorepo deploy: the build
-looks for a `package.json` beside the Flutter project and finds none. Pushing to `main`
+looks for a `package.json` beside the Flutter project, finds none, detects the
+framework as "Other" and ships nothing — every path then 404s.
+
+Two things follow from that setting, and both have bitten this project:
+
+* Root Directory is resolved against whatever gets uploaded, so `vercel deploy`
+  must run from the **repository root**. Running it inside `web-admin/` makes
+  Vercel look for `web-admin/web-admin`.
+* The CLI would then upload the whole monorepo and trip the 15,000-file limit
+  on the Flutter build output alone, which is what [`.vercelignore`](.vercelignore)
+  is for.
+
+Recreating the Vercel project resets both Root Directory and every environment
+variable to defaults. If the site starts returning 404 everywhere, check that
+setting first. Pushing to `main`
 deploys to production; every other branch and pull request gets its own preview
 URL. The environment variables above have to be set in *Project Settings →
 Environment Variables* — Vercel never reads `.env.local`.

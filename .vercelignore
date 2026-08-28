@@ -1,0 +1,11 @@
+# Vercel builds web-admin/ and nothing else — the Root Directory setting points
+# there. Without this the CLI still uploads the whole monorepo and trips the
+# 15,000-file limit on the Flutter half alone.
+mobile_app/
+
+.git/
+node_modules/
+.next/
+.dart_tool/
+build/
+coverage/

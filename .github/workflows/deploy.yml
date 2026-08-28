@@ -18,14 +18,14 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://nilgiri-news.vercel.app
+      url: https://malira-rouge.vercel.app
 
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       # Identifiers, not secrets — they name the project, they do not grant
       # access to it. Only VERCEL_TOKEN has to be a repository secret.
       VERCEL_ORG_ID: team_ZPRgBhLQNifxNotAjjGEtCbr
-      VERCEL_PROJECT_ID: prj_OtZhB6OeWnEDSL1BCSEQfIVxNQua
+      VERCEL_PROJECT_ID: prj_VvYtqibwxWPJAcZ3kRvqwPk57BMV
 
     steps:
       - uses: actions/checkout@v4
@@ -51,9 +51,13 @@ jobs:
             echo "ok=true" >> "$GITHUB_OUTPUT"
           fi
 
+      # From the repository root, NOT from web-admin. The project's Root
+      # Directory is already "web-admin", and it is resolved relative to
+      # whatever is uploaded — deploying from inside the folder makes Vercel
+      # look for web-admin/web-admin and fail. .vercelignore keeps the Flutter
+      # half out of the upload, which would otherwise blow the 15,000-file cap.
       - name: Deploy to production
         if: steps.gate.outputs.ok == 'true'
-        working-directory: web-admin
         run: |
           set -euo pipefail
           # Environment variables live on the Vercel project, not here, so no
@@ -61,4 +65,4 @@ jobs:
           url=$(npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN")
           echo "Deployed to $url"
           echo "- Deployment: $url" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Alias: <https://nilgiri-news.vercel.app>" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Alias: <https://malira-rouge.vercel.app>" >> "$GITHUB_STEP_SUMMARY"
