@@ -1,13 +1,14 @@
 """Generate every launcher icon from the palette tokens.
 
 The drawing is the same one `lib/src/ui/common/app_logo.dart` paints at runtime:
-a navy-to-hill-blue field with a nameplate on it — a saffron rule, a heavy N,
-a cream rule — the way a broadsheet rules off its masthead.
+a rose field with a nameplate on it — a saffron rule, a heavy M, a cream rule —
+the way a masthead rules itself off.
 
 It used to be a landscape: ridgelines under a low sun. That is the exact recipe
-for the Material `image` glyph, and on a home screen it read as a photo
-gallery rather than as this newspaper. A horizon is what does it, so there is
-no horizon here. The constants below are copied from `_LogoPainter`, and the
+for the Material `image` glyph, and on a home screen it read as a photo gallery
+rather than as this app. A horizon is what does it, so there is no horizon here
+— which is also why MALIRA's mark is its initial rather than a heart over the
+hills the tagline names. A heart at 48px is every dating app ever shipped. The constants below are copied from `_LogoPainter`, and the
 colours from `lib/src/core/theme/palette.dart` — which are themselves the sRGB
 conversions of the OKLCH tokens in `web-admin/src/app/globals.css`. Nothing
 here invents a colour.
@@ -31,9 +32,9 @@ from PIL import Image, ImageDraw, ImageFont
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ------------------------------- palette ---------------------------------
-# Palette.lightRail, Palette.lightNews, Palette.lightSaffron.
-RAIL = (0x13, 0x25, 0x3F)
-NEWS = (0x14, 0x58, 0x92)
+# Palette.lightBrandDeep, Palette.lightBrand (= lightMatrimony), lightSaffron.
+GROUND = (0x5E, 0x1E, 0x3B)
+BRAND = (0x9C, 0x34, 0x64)
 SAFFRON = (0xDD, 0x87, 0x2B)
 # Palette.lightBackground — the paper the desk prints on.
 CREAM = (0xFA, 0xF8, 0xF2)
@@ -52,7 +53,7 @@ RULE_HALF_WIDTH = 0.30
 
 # The N, measured by its ink box rather than its em box — a cap-height letter
 # sits low in its em, and centring the em would hang it below the rules.
-GLYPH = "N"
+GLYPH = "M"
 GLYPH_HEIGHT = 0.42
 GLYPH_CENTRE = 0.50
 FONT = os.path.join("assets", "fonts", "Geist-Bold.ttf")
@@ -80,7 +81,7 @@ def _lerp(a, b, t):
 
 
 def field(size: int) -> Image.Image:
-    """The navy-to-blue ground, top-left to bottom-right."""
+    """The rose ground, top-left to bottom-right."""
     image = Image.new("RGB", (size, size))
     pixels = image.load()
     span = 2 * (size - 1)
@@ -91,7 +92,7 @@ def field(size: int) -> Image.Image:
             key = round(t * 2048)
             colour = row_cache.get(key)
             if colour is None:
-                colour = row_cache[key] = _lerp(RAIL, NEWS, key / 2048)
+                colour = row_cache[key] = _lerp(GROUND, BRAND, key / 2048)
             pixels[x, y] = colour
     return image
 
@@ -173,7 +174,7 @@ def write(image: Image.Image, *parts: str, opaque: bool = False) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     if opaque:
         # An iOS app icon with an alpha channel is rejected at submission.
-        flat = Image.new("RGB", image.size, RAIL)
+        flat = Image.new("RGB", image.size, GROUND)
         flat.paste(image, mask=image.split()[3] if image.mode == "RGBA" else None)
         image = flat
     image.save(path)

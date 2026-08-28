@@ -3,19 +3,20 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/palette.dart';
 
-/// The Nilgiri News mark.
+/// The MALIRA mark.
 ///
-/// The same drawing as the launcher icon — a saffron rule, a heavy N, a cream
-/// rule, the way a broadsheet rules off its masthead — but painted rather than
-/// shipped as a bitmap, so it is crisp at any size and takes its colours from
-/// the theme instead of being baked at one tint.
+/// The same drawing as the launcher icon — a saffron rule, a heavy M, a cream
+/// rule, the way a masthead rules itself off — but painted rather than shipped
+/// as a bitmap, so it is crisp at any size and takes its colours from the theme
+/// instead of being baked at one tint.
 ///
 /// It used to be a landscape: layered ridgelines under a low sun. The intent
-/// was the hills the district is named after, but a horizon with a sun over it
-/// is precisely the Material `image` glyph, and on a home screen full of other
-/// apps it read as a photo gallery. Nothing here draws a horizon. A nameplate
-/// says "newspaper" at 48px in a way scenery cannot, and it is the one shape
-/// on the launcher that belongs to this app alone.
+/// was the hills the tagline names, but a horizon with a sun over it is
+/// precisely the Material `image` glyph, and on a home screen full of other
+/// apps it read as a photo gallery. Nothing here draws a horizon — and for the
+/// same reason nothing here draws a heart, which at 48px is every dating app
+/// ever shipped. The initial is the one shape on the launcher that belongs to
+/// this app alone.
 class AppLogo extends StatelessWidget {
   const AppLogo({
     super.key,
@@ -25,8 +26,8 @@ class AppLogo extends StatelessWidget {
 
   final double size;
 
-  /// The navy tile behind the mark. Off when the logo sits on the rail
-  /// already, where a second blue square would only add an edge.
+  /// The rose tile behind the mark. Off when the logo sits on a coloured
+  /// surface already, where a second filled square would only add an edge.
   final bool rounded;
 
   @override
@@ -40,8 +41,8 @@ class AppLogo extends StatelessWidget {
         borderRadius: BorderRadius.circular(rounded ? size * 0.22 : 0),
         child: CustomPaint(
           painter: _LogoPainter(
-            background: rounded ? brand.rail : Colors.transparent,
-            far: Palette.lightNews,
+            background: rounded ? Palette.lightBrandDeep : Colors.transparent,
+            far: Palette.lightBrand,
             rule: brand.saffron,
           ),
         ),
@@ -116,7 +117,7 @@ class _LogoPainter extends CustomPainter {
     // low in its em, and centring the em would hang it below the rules.
     final painter = TextPainter(
       text: const TextSpan(
-        text: 'N',
+        text: 'M',
         style: TextStyle(
           fontFamily: 'Geist',
           fontWeight: FontWeight.w700,

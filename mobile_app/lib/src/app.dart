@@ -60,7 +60,7 @@ class _NilgiriNewsAppState extends ConsumerState<NilgiriNewsApp> {
     final router = ref.watch(routerProvider);
 
     return MaterialApp.router(
-      title: 'Nilgiri News',
+      title: 'MALIRA',
       debugShowCheckedModeBanner: false,
       theme: _forLanguage(AppTheme.light(), preferences.language),
       darkTheme: _forLanguage(AppTheme.dark(), preferences.language),
