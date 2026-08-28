@@ -63,7 +63,7 @@ export default function ReaderHomePage() {
             {lang === "ta" ? "இன்றைய செய்திகள்" : "Today from the district"}
           </p>
           <h1 className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">
-            {lang === "ta" ? "நீலகிரி செய்திகள்" : "Nilgiri News"}
+            {lang === "ta" ? "செய்திகள்" : "News"}
           </h1>
           <p className="text-muted-foreground mt-2 max-w-2xl text-sm leading-relaxed sm:text-base">
             {lang === "ta"

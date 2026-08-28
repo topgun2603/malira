@@ -71,7 +71,7 @@ export default function ReaderArticlePage() {
           }
           action={
             <Button asChild variant="outline">
-              <Link href="/">
+              <Link href="/news">
                 <ArrowLeft className="size-4" />
                 Back to the feed
               </Link>
@@ -94,7 +94,7 @@ export default function ReaderArticlePage() {
   const [lead, ...gallery] = article.images;
   const videoId = article.youtubeUrl ? extractYouTubeId(article.youtubeUrl) : null;
 
-  const shareText = `${title} — Nilgiri News`;
+  const shareText = `${title} — MALIRA`;
   const shareUrl =
     typeof window !== "undefined" ? window.location.href : "";
 
@@ -112,7 +112,7 @@ export default function ReaderArticlePage() {
   return (
     <article className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
       <Button variant="ghost" size="sm" className="mb-6 -ml-2" asChild>
-        <Link href="/">
+        <Link href="/news">
           <ArrowLeft className="size-4" />
           {lang === "ta" ? "செய்திகளுக்குத் திரும்பு" : "All stories"}
         </Link>

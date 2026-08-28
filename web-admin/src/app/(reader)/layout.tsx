@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { Mountain } from "lucide-react";
+import { MaliraMark } from "@/components/shared/malira-mark";
 import { LanguageProvider, useLanguage } from "@/components/reader/language";
 import { SiteHeader } from "@/components/reader/site-header";
 import { PopupAd } from "@/components/reader/ad-slot";
@@ -17,13 +17,13 @@ function SiteFooter() {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-sm space-y-2">
             <span className="flex items-center gap-2 font-semibold">
-              <Mountain className="text-primary size-4" />
-              Nilgiri News
+              <MaliraMark className="size-4 rounded" />
+              MALIRA
             </span>
             <p className="text-muted-foreground text-sm leading-relaxed">
               {lang === "ta"
-                ? "நீலகிரி மாவட்டத்தின் செய்திகள், நிகழ்வுகள் மற்றும் சமூக அறிவிப்புகள்."
-                : "News, events and community announcements from across the Nilgiris."}
+                ? "நீலகிரி மாவட்டத்தின் திருமணத் தகவல், செய்திகள் மற்றும் நிகழ்வுகள்."
+                : "Matrimony, news and events from across the Nilgiris."}
             </p>
           </div>
 
@@ -53,7 +53,7 @@ function SiteFooter() {
 
         <div className="text-muted-foreground mt-8 flex flex-col gap-2 border-t pt-6 text-xs sm:flex-row sm:items-center sm:justify-between">
           <p>
-            &copy; Nilgiri News
+            &copy; MALIRA
           </p>
           <Link href="/admin/dashboard" className="hover:text-foreground underline">
             Editorial desk
@@ -78,6 +78,8 @@ function sectionFor(pathname: string): Section {
   if (pathname.startsWith("/songs")) return "songs";
   return "news";
 }
+
+// `/` needs no case of its own: it redirects to /matrimony and never renders.
 
 export default function ReaderLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
