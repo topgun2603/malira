@@ -4,7 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Loader2, Mountain } from "lucide-react";
+import { Loader2 } from "lucide-react";
+import { MaliraMark } from "@/components/shared/malira-mark";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -101,10 +102,8 @@ function LoginForm() {
 
       <FadeIn className="relative w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
-          <div className="bg-primary text-primary-foreground mb-4 flex size-12 items-center justify-center rounded-xl shadow-sm">
-            <Mountain className="size-6" />
-          </div>
-          <h1 className="text-xl font-semibold tracking-tight">Nilgiri News Admin</h1>
+          <MaliraMark className="mb-4 size-12 rounded-xl shadow-sm" />
+          <h1 className="text-xl font-semibold tracking-tight">MALIRA Admin</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             {mode === "register"
               ? "Create a free reader account."

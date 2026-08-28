@@ -214,7 +214,7 @@ export async function seedSampleArticles(actor: {
         to,
         eyebrow: category.name,
         title: sample.title,
-        footer: "Sample image · Nilgiri News",
+        footer: "Sample image · MALIRA",
       });
       if (file) {
         images = [await uploadArticleImage(file, key)];

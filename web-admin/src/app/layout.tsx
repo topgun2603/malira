@@ -30,17 +30,17 @@ const notoTamil = Noto_Sans_Tamil({
 
 export const metadata: Metadata = {
   title: {
-    default: "Nilgiri News Admin",
-    template: "%s · Nilgiri News Admin",
+    default: "MALIRA",
+    template: "%s · MALIRA",
   },
-  description: "Editorial desk for the Nilgiri News app.",
+  description: "MALIRA — Love, Rooted in the Hills.",
 };
 
 export const viewport: Viewport = {
   // Tints the browser chrome on Android. Matches the icon, not the page.
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#145892" },
-    { media: "(prefers-color-scheme: dark)", color: "#0f2438" },
+    { media: "(prefers-color-scheme: light)", color: "#9C3464" },
+    { media: "(prefers-color-scheme: dark)", color: "#5E1E3B" },
   ],
 };
 

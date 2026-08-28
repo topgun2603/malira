@@ -132,7 +132,7 @@ export const SAMPLE_ADS: SampleAd[] = [
   },
   {
     name: "WhatsApp headlines — popup",
-    advertiser: "Nilgiri News",
+    advertiser: "MALIRA",
     format: "popup",
     placement: "popup",
     headline: "Get the day's headlines on WhatsApp",
@@ -153,7 +153,7 @@ export const SAMPLE_ADS: SampleAd[] = [
       height: 450,
       from: "#8a6a1f",
       to: "#c9a44a",
-      eyebrow: "Nilgiri News",
+      eyebrow: "MALIRA",
     },
   },
 ];

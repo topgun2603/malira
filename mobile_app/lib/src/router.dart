@@ -36,7 +36,11 @@ final routerProvider = Provider<GoRouter>((ref) {
 
   return GoRouter(
     navigatorKey: _rootKey,
-    initialLocation: onboarded ? '/news' : '/welcome',
+    // Matrimony is the front door, matching the web. Opening the app on the
+    // centre tab is safe for somebody who has never signed in: the matrimony
+    // screen shows its own sign-in gate rather than bouncing to a login, so a
+    // first run lands on the pitch instead of on a form.
+    initialLocation: onboarded ? '/matrimony' : '/welcome',
     routes: [
       // First run. Outside the shell: there is no tab bar to show somebody who
       // has not yet chosen the language the tabs would be labelled in.

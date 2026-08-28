@@ -47,7 +47,7 @@ class _OnboardingPageState extends ConsumerState<OnboardingPage> {
 
   Future<void> _finish() async {
     await ref.read(preferencesProvider.notifier).completeOnboarding();
-    if (mounted) context.go('/news');
+    if (mounted) context.go('/matrimony');
   }
 
   void _next() {
@@ -188,13 +188,13 @@ class _LanguagePage extends ConsumerWidget {
         Center(child: AppLogo(size: 84)),
         const SizedBox(height: Gap.xl),
         Text(
-          'Nilgiri News',
+          'MALIRA',
           textAlign: TextAlign.center,
           style: context.texts.displaySmall,
         ),
         const SizedBox(height: 2),
         Text(
-          'நீலகிரி செய்திகள்',
+          'மலிரா',
           textAlign: TextAlign.center,
           style: context.texts.titleLarge?.copyWith(
             color: context.brand.mutedForeground,

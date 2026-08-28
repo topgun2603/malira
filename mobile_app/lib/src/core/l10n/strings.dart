@@ -45,7 +45,11 @@ class Strings {
   String _t(String en, String ta) => isTamil ? ta : en;
 
   // ------------------------------- Masthead --------------------------------
-  String get appName => _t('Nilgiri News', 'நீலகிரி செய்திகள்');
+  String get appName => _t('MALIRA', 'மலிரா');
+
+  /// The tagline under the wordmark.
+  String get tagline =>
+      _t('Love, Rooted in the Hills', 'மலைகளில் வேரூன்றிய அன்பு');
   String get todayFromDistrict =>
       _t('Today from the district', 'இன்றைய செய்திகள்');
   String get mastheadBlurb => _t(
@@ -307,8 +311,8 @@ class Strings {
   /// everywhere it has room.
   String get matrimonyTab => _t('Matrimony', 'திருமணம்');
   String get matrimonyBlurb => _t(
-    'Profiles from Badaga families across the Nilgiris, reviewed by the association before they appear.',
-    'நீலகிரி பதுகர் குடும்பங்களின் திருமணத் தகவல்கள், சங்கத்தின் பரிசீலனைக்குப் பிறகு வெளியிடப்படும்.',
+    'Profiles from families across the Nilgiris, each one reviewed before it appears.',
+    'நீலகிரி குடும்பங்களின் திருமணத் தகவல்கள், ஒவ்வொன்றும் பரிசீலனைக்குப் பிறகு வெளியிடப்படும்.',
   );
   String get browseProfiles => _t('Browse profiles', 'தகவல்களைப் பார்');
   String get matrimonySearchHint => _t(

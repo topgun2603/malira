@@ -120,6 +120,12 @@ class _SignInPageState extends ConsumerState<SignInPage> {
             ),
             const SizedBox(height: Gap.lg),
             Text(strings.appName, style: context.texts.headlineMedium),
+            Text(
+              strings.tagline,
+              style: context.texts.bodySmall?.copyWith(
+                color: context.brand.mutedForeground,
+              ),
+            ),
             const SizedBox(height: Gap.sm),
             // Says plainly why an account exists at all. Nobody should think
             // the news has just been put behind a login.

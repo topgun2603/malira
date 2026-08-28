@@ -225,10 +225,10 @@ class _MastheadBackground extends StatelessWidget {
 
 /// The wordmark, sized so Tamil and English occupy the same band.
 ///
-/// Noto Sans Tamil sets visibly larger than Geist at the same point size, and
-/// "நீலகிரி செய்திகள்" is half again as long as "Nilgiri News" — left alone it
-/// overran the bar. The size is stepped down for Tamil and the whole thing is
-/// allowed to shrink rather than clip, so neither script can push past its row.
+/// Noto Sans Tamil sets visibly larger than Geist at the same point size, so a
+/// Tamil wordmark of the same character count still overran the bar. The size is
+/// stepped down for Tamil and the whole thing is allowed to shrink rather than
+/// clip, so neither script can push past its row whatever the wordmark says.
 class _Wordmark extends StatelessWidget {
   const _Wordmark({required this.text, required this.expanded});
 
