@@ -1,5 +1,5 @@
 name: nilgiri_news
-description: "Nilgiri News — news, events and songs for the Badaga community of the Nilgiris."
+description: "MALIRA — Love, Rooted in the Hills. Matrimony, news, events and songs for the Nilgiris."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -61,6 +61,17 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+  assets:
+    # The matrimony sign-in artwork: a Badaga couple over the tea terraces at
+    # first light, and the same scene at dusk. Two files rather than one tinted
+    # image, because the dark version is a different painting and not a filter.
+    #
+    # WebP at q94 rather than the source PNGs: 304 KB instead of 3.5 MB, with a
+    # mean error of about 1 level in 255 — invisible on a phone, and the flat
+    # sky is where that was checked, since a gradient is what would band.
+    - assets/matrimony/login_light.webp
+    - assets/matrimony/login_dark.webp
 
   # Bundled, not fetched at runtime. The audience is rural and often on a poor
   # connection; typography that depends on a successful network call is

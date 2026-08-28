@@ -10,9 +10,11 @@ import '../../data/repositories/matrimony_repository.dart';
 import '../../state/auth.dart';
 import '../../state/matrimony.dart';
 import '../../state/preferences.dart';
+import '../common/app_logo.dart';
 import '../common/states.dart';
 import 'widgets/filter_sheet.dart';
 import 'widgets/interest_lists.dart';
+import 'widgets/matrimony_backdrop.dart';
 import 'widgets/profile_card.dart';
 
 /// The matrimony section.
@@ -72,103 +74,201 @@ class _SignInGate extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final brand = context.brand;
-
     return Scaffold(
-      appBar: AppBar(title: Text(strings.matrimony)),
-      body: ListView(
-        padding: const EdgeInsets.fromLTRB(Gap.page, Gap.xxl, Gap.page, Gap.xl),
-        children: [
-          Center(
-            child: Container(
-              height: 72,
-              width: 72,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: brand.matrimony.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.favorite_outline,
-                size: 32,
-                color: brand.matrimony,
-              ),
-            ),
-          ),
-          const SizedBox(height: Gap.xl),
-          Text(
-            strings.matrimony,
-            textAlign: TextAlign.center,
-            style: context.texts.headlineMedium,
-          ),
-          const SizedBox(height: Gap.md),
-          Text(
-            strings.matrimonyBlurb,
-            textAlign: TextAlign.center,
-            style: context.texts.bodyMedium,
-          ),
-
-          const SizedBox(height: Gap.xxl),
-
-          // The three promises the section makes. Stated up front because they
-          // are the reasons somebody would trust it with a date of birth.
-          _Promise(
-            icon: Icons.verified_outlined,
-            text: strings.isTamil
-                ? 'ஒவ்வொரு தகவலும் சங்கத்தால் பரிசீலிக்கப்படுகிறது.'
-                : 'Every profile is reviewed by the association before it appears.',
-          ),
-          _Promise(
-            icon: Icons.lock_outline,
-            text: strings.contactLocked,
-          ),
-          _Promise(
-            icon: Icons.visibility_off_outlined,
-            text: strings.isTamil
-                ? 'உள்நுழைந்த உறுப்பினர்கள் மட்டுமே தகவல்களைப் பார்க்க முடியும்.'
-                : 'Only signed-in members can see profiles. Nothing here is public.',
-          ),
-
-          const SizedBox(height: Gap.xxl),
-
-          FilledButton(
-            onPressed: () => context.push('/sign-in'),
-            child: Text(strings.signIn),
-          ),
-          const SizedBox(height: Gap.sm),
-          Text(
-            strings.signInBlurb,
-            textAlign: TextAlign.center,
-            style: context.texts.bodySmall,
-          ),
-        ],
+      // The artwork is the screen. An app bar over it would only put a grey
+      // band across the sky the painting leaves open on purpose.
+      body: MatrimonyBackdrop(
+        child: Column(
+          children: [
+            Expanded(child: _GateCopy(strings: strings)),
+            // Sits on the artwork rather than above it, so the painting keeps
+            // the full height of the screen and the note still reads.
+            _GateFootnote(strings: strings),
+          ],
+        ),
       ),
     );
   }
 }
 
-class _Promise extends StatelessWidget {
-  const _Promise({required this.icon, required this.text});
+/// The masthead and the call to action, scrolling under their own scrim.
+class _GateCopy extends StatelessWidget {
+  const _GateCopy({required this.strings});
 
-  final IconData icon;
-  final String text;
+  final Strings strings;
 
   @override
   Widget build(BuildContext context) {
-    final brand = context.brand;
+    final ground = context.backdropGround;
 
-    return Padding(
-      padding: const EdgeInsets.only(bottom: Gap.lg),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, size: 19, color: brand.matrimony),
-          const SizedBox(width: Gap.md),
-          Expanded(
-            child: Text(text, style: context.texts.bodyMedium),
+    return LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            // The scrim is sized to the copy rather than to a fixed fraction
+            // of the screen, because how far down the copy reaches is not a
+            // constant: this audience is offered a text size control, and at
+            // the largest setting the old fixed band ended above the last
+            // line and left it sitting on the couple's white dress, which is
+            // the brightest thing in the painting. Hugging the content keeps
+            // it readable at any size, and on a normal setting it still stops
+            // well above the hills.
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [ground, ground, ground.withValues(alpha: 0.0)],
+                  stops: const [0.0, 0.78, 1.0],
+                ),
+              ),
+              child: Padding(
+                // The status bar inset is paid here rather than by a SafeArea
+                // outside, so the scrim runs to the top edge instead of
+                // starting below it and leaving a bright strip above.
+                padding: EdgeInsets.fromLTRB(
+                  Gap.page,
+                  MediaQuery.viewPaddingOf(context).top + Gap.xl,
+                  Gap.page,
+                  Gap.xxl,
+                ),
+                child: ConstrainedBox(
+                  // Floor, not a ceiling: on a tall phone the copy stops above
+                  // the hills; on a short one it grows past them and takes its
+                  // scrim with it, which is better than shrinking the type.
+                  constraints: BoxConstraints(
+                    minHeight:
+                        constraints.maxHeight *
+                            MatrimonyBackdrop.contentFraction -
+                        Gap.xl * 2,
+                  ),
+                  child: _GateContent(strings: strings),
+                ),
+              ),
+            ),
           ),
-        ],
+    );
+  }
+}
+
+/// The note about what an account is actually for, held to the bottom edge.
+///
+/// It is a footnote rather than a line under the button: it qualifies the
+/// whole screen instead of the tap, and at the bottom it stops pushing the
+/// call to action up the page. The gradient is what makes that safe — it
+/// lands on the couple's hem, the palest part of the painting, and fades in
+/// from nothing so the join never reads as a band.
+class _GateFootnote extends StatelessWidget {
+  const _GateFootnote({required this.strings});
+
+  final Strings strings;
+
+  @override
+  Widget build(BuildContext context) {
+    final ground = context.backdropGround;
+
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [
+            ground.withValues(alpha: 0.0),
+            ground.withValues(alpha: 0.94),
+            ground,
+          ],
+          stops: const [0.0, 0.62, 1.0],
+        ),
       ),
+      child: Padding(
+        // Deep at the top to give the gradient somewhere to fade in, and the
+        // bottom inset paid here because the shell's navigation bar sits
+        // outside this Scaffold.
+        padding: EdgeInsets.fromLTRB(
+          Gap.page,
+          Gap.xxl,
+          Gap.page,
+          Gap.lg + MediaQuery.viewPaddingOf(context).bottom,
+        ),
+        child: Text(
+          strings.signInBlurb,
+          textAlign: TextAlign.center,
+          style: context.texts.bodySmall?.copyWith(
+            color: context.backdropMutedInk,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _GateContent extends StatelessWidget {
+  const _GateContent({required this.strings});
+
+  final Strings strings;
+
+  @override
+  Widget build(BuildContext context) {
+    // Not the theme's onSurface: the backdrop is a painting, and in the light
+    // theme it stays cream whatever the rest of the app is doing.
+    final ink = context.backdropInk;
+    final muted = context.backdropMutedInk;
+    final accent = context.backdropAccent;
+
+    // The mark and the name are the masthead of the section and the painting
+    // behind them is symmetrical, so they sit on the axis it already has.
+    // Everything below stays ranged left: centred body copy is harder to read,
+    // and this audience is often reading it at a raised text size.
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Center(
+          child: Column(
+            children: [
+              const AppLogo(size: 52),
+              const SizedBox(height: Gap.lg),
+              Text(
+                strings.appName,
+                textAlign: TextAlign.center,
+                style: context.texts.displaySmall?.copyWith(
+                  color: ink,
+                  fontWeight: FontWeight.w700,
+                  letterSpacing: 1.5,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                strings.tagline,
+                textAlign: TextAlign.center,
+                style: context.texts.titleSmall?.copyWith(color: muted),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: Gap.xl),
+
+        Text(
+          strings.matrimonyBlurb,
+          style: context.texts.bodyLarge?.copyWith(color: ink, height: 1.45),
+        ),
+
+        const SizedBox(height: Gap.xl),
+
+        // Full width. It clears the couple on the vertical now that the
+        // footnote has moved out from under it, so there is nothing left for a
+        // narrower measure to protect.
+        SizedBox(
+          width: double.infinity,
+          child: FilledButton(
+            onPressed: () => context.push('/sign-in'),
+            style: FilledButton.styleFrom(
+              backgroundColor: accent,
+              foregroundColor: Colors.white,
+              padding: const EdgeInsets.symmetric(vertical: Gap.lg),
+            ),
+            child: Text(strings.signIn),
+          ),
+        ),
+      ],
     );
   }
 }
