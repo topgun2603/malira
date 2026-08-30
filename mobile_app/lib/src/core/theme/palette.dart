@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// The MALIRA palette.
+/// The RK Matrimony palette.
 ///
 /// These are not new colours. Every value is the sRGB conversion of an OKLCH
 /// token in `web-admin/src/app/globals.css`, so the app and the admin panel are
@@ -40,11 +40,11 @@ abstract final class Palette {
   static const lightRail = Color(0xFF13253F);
   static const lightRailForeground = Color(0xFFDEE9F5);
 
-  /// The MALIRA brand ground, and the deeper rose it ramps out of.
+  /// The RK Matrimony brand ground, and the deeper rose it ramps out of.
   ///
   /// The launcher tile and the painted mark are drawn on this gradient. It is
   /// the matrimony rose rather than the tea green the app used to wear: the
-  /// product is called MALIRA and opens on matrimony, so the mark a reader
+  /// product is called RK Matrimony and opens on matrimony, so the mark a reader
   /// taps should be the colour of the place it opens.
   static const lightBrandDeep = Color(0xFF5E1E3B);
   static const lightBrand = lightMatrimony;

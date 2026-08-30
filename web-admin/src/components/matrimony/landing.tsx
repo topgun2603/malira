@@ -263,7 +263,7 @@ export function MatrimonyLanding() {
         <div className="mx-auto w-full max-w-6xl px-4 py-24 sm:px-6 sm:py-32 lg:py-40">
           <FadeIn className="max-w-2xl">
             <Badge className="border-0 bg-white/15 font-normal text-white backdrop-blur">
-              {lang === "ta" ? "மலிரா" : "MALIRA"}
+              {lang === "ta" ? "RK திருமணம்" : "RK Matrimony"}
             </Badge>
 
             <h1 className="mt-5 text-4xl leading-[1.05] font-semibold tracking-tight text-white sm:text-6xl">

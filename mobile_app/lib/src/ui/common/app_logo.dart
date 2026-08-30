@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/palette.dart';
 
-/// The MALIRA mark.
+/// The RK Matrimony mark.
 ///
 /// The same drawing as the launcher icon — a saffron rule, a heavy M, a cream
 /// rule, the way a masthead rules itself off — but painted rather than shipped
@@ -74,8 +74,8 @@ class _LogoPainter extends CustomPainter {
     (0.245, 0.048, true),
     (0.755, 0.048, false),
   ];
-  static const _ruleHalfWidth = 0.30;
-  static const _glyphHeight = 0.42;
+  static const _ruleHalfWidth = 0.34;
+  static const _glyphHeight = 0.34;
 
   /// Palette.lightBackground — the paper the desk prints on.
   static const _paper = Color(0xFFFAF8F2);
@@ -117,7 +117,7 @@ class _LogoPainter extends CustomPainter {
     // low in its em, and centring the em would hang it below the rules.
     final painter = TextPainter(
       text: const TextSpan(
-        text: 'M',
+        text: 'RK',
         style: TextStyle(
           fontFamily: 'Geist',
           fontWeight: FontWeight.w700,

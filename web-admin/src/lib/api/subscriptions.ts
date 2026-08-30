@@ -144,7 +144,7 @@ export async function startPlanCheckout(
       amount: order.amount,
       currency: order.currency,
       order_id: order.orderId,
-      name: "MALIRA",
+      name: "RK Matrimony",
       description: `Matrimony — ${order.planName}`,
       prefill: { name: profileName },
       // Matrimony rose: checkout only ever opens inside that section.

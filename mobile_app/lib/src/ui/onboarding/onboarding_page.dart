@@ -188,7 +188,7 @@ class _LanguagePage extends ConsumerWidget {
         Center(child: AppLogo(size: 84)),
         const SizedBox(height: Gap.xl),
         Text(
-          'MALIRA',
+          'RK Matrimony',
           textAlign: TextAlign.center,
           style: context.texts.displaySmall,
         ),

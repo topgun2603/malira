@@ -1,4 +1,4 @@
-# Nilgiri News — Web Admin Panel
+# RK Matrimony — Web Admin Panel
 
 Two things in one app:
 
@@ -8,7 +8,7 @@ Two things in one app:
    design for the Android app: the Flutter build mirrors these screens and these
    exact Firestore queries.
 
-Nilgiri News is a district news product. It is not tied to any single
+RK Matrimony is a matrimony and district news product. It is not tied to any single
 organisation — there is no membership, no committee and no owning body anywhere
 in the model, and the About page and contact details are content the desk edits
 in Settings rather than anything baked into the code.

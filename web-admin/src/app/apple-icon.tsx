@@ -24,15 +24,18 @@ export default function AppleIcon() {
         }}
       >
         <svg width="180" height="180" viewBox="0 0 32 32">
-          <rect x="6.4" y="7.1" width="19.2" height="1.6" rx="0.8" fill="#DD872B" />
-          <rect x="6.4" y="23.3" width="19.2" height="1.6" rx="0.8" fill="#FAF8F2" />
-          <path
-            d="M10.5 21.5V10.5L16 17.5 21.5 10.5V21.5"
+          <rect x="5.1" y="7.1" width="21.8" height="1.6" rx="0.8" fill="#DD872B" />
+          <rect x="5.1" y="23.3" width="21.8" height="1.6" rx="0.8" fill="#FAF8F2" />
+          <g
             fill="none"
             stroke="#FAF8F2"
-            strokeWidth="3"
+            strokeWidth="2.6"
+            strokeLinecap="round"
             strokeLinejoin="round"
-          />
+          >
+            <path d="M8.6 21V11h3.6a2.3 2.3 0 0 1 0 4.6H8.6m2.7 0L15.2 21" />
+            <path d="M18 11v10M24 11l-5.8 5.3M20.2 14.4 24.4 21" />
+          </g>
         </svg>
       </div>
     ),

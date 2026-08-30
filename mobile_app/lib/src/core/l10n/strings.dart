@@ -45,7 +45,7 @@ class Strings {
   String _t(String en, String ta) => isTamil ? ta : en;
 
   // ------------------------------- Masthead --------------------------------
-  String get appName => _t('MALIRA', 'மலிரா');
+  String get appName => _t('RK Matrimony', 'RK திருமணம்');
 
   /// The tagline under the wordmark.
   String get tagline =>

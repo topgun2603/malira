@@ -7,7 +7,7 @@ the way a masthead rules itself off.
 It used to be a landscape: ridgelines under a low sun. That is the exact recipe
 for the Material `image` glyph, and on a home screen it read as a photo gallery
 rather than as this app. A horizon is what does it, so there is no horizon here
-— which is also why MALIRA's mark is its initial rather than a heart over the
+— which is also why the RK Matrimony mark is its initials rather than a heart over the
 hills the tagline names. A heart at 48px is every dating app ever shipped. The constants below are copied from `_LogoPainter`, and the
 colours from `lib/src/core/theme/palette.dart` — which are themselves the sRGB
 conversions of the OKLCH tokens in `web-admin/src/app/globals.css`. Nothing
@@ -49,12 +49,17 @@ RULES = (
     (0.245, 0.048, SAFFRON),
     (0.755, 0.048, CREAM),
 )
-RULE_HALF_WIDTH = 0.30
+RULE_HALF_WIDTH = 0.34
 
-# The N, measured by its ink box rather than its em box — a cap-height letter
+# The initials, measured by ink box rather than em box — a cap-height letter
 # sits low in its em, and centring the em would hang it below the rules.
-GLYPH = "M"
-GLYPH_HEIGHT = 0.42
+#
+# Two letters need more room than one: at the single-letter height the pair
+# runs past the ends of the rules and the nameplate stops reading as a frame.
+# Shorter letters inside slightly wider rules keeps the shape and still holds
+# together at 48px.
+GLYPH = "RK"
+GLYPH_HEIGHT = 0.34
 GLYPH_CENTRE = 0.50
 FONT = os.path.join("assets", "fonts", "Geist-Bold.ttf")
 

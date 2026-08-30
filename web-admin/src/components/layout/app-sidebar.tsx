@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { MaliraMark } from "@/components/shared/malira-mark";
+import { RkMark } from "@/components/shared/rk-mark";
 import {
   Sidebar,
   SidebarContent,
@@ -49,9 +49,9 @@ export function AppSidebar() {
             rail edge. Dropping it and centring puts the mark on the same
             vertical line as the nav. */}
         <div className="flex items-center gap-2.5 px-2 py-1.5 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0">
-          <MaliraMark className="size-8 shrink-0" />
+          <RkMark className="size-8 shrink-0" />
           <div className="grid flex-1 leading-tight group-data-[collapsible=icon]:hidden">
-            <span className="truncate text-sm font-semibold">MALIRA</span>
+            <span className="truncate text-sm font-semibold">RK Matrimony</span>
             <span className="text-sidebar-foreground/60 truncate text-xs">
               Editorial desk
             </span>

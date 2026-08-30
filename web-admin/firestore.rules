@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // -----------------------------------------------------------------------------
-// Nilgiri News — Firestore security rules
+// RK Matrimony — Firestore security rules
 //
 // The permission matrix in src/lib/permissions.ts mirrors these rules so the UI
 // can hide what would fail. THIS file is the enforcement layer. Anything the UI

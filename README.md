@@ -1,8 +1,9 @@
-# Nilgiri News
+# RK Matrimony
 
-The association's newsroom, in two halves that share one Firebase project.
+The association's matrimony service and newsroom, in two halves that share one
+Firebase project.
 
-**Live:** <https://malira-rouge.vercel.app>
+**Live:** <https://rk-matrimony.vercel.app>
 
 | | |
 |---|---|

@@ -1,4 +1,4 @@
-# Nilgiri News — mobile app
+# RK Matrimony — mobile app
 
 The reader app for the Badaga community association in the Nilgiris. It reads
 the same Firestore project the admin panel in [`../web-admin`](../web-admin)

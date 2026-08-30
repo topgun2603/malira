@@ -534,7 +534,7 @@ export interface AppSettings {
 }
 
 export const DEFAULT_SETTINGS: Omit<AppSettings, "updatedAt" | "updatedBy"> = {
-  aboutTitle: "About MALIRA",
+  aboutTitle: "About RK Matrimony",
   aboutBody: "",
   aboutBodyTa: "",
   contactEmail: "",

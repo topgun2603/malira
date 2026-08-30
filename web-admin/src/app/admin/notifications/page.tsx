@@ -222,7 +222,7 @@ export default function NotificationsPage() {
                       <Bell className="size-2.5" />
                     </span>
                     <span className="text-muted-foreground text-[11px]">
-                      MALIRA · now
+                      RK Matrimony · now
                     </span>
                   </div>
                   <p className="line-clamp-1 text-sm font-medium">

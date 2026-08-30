@@ -94,7 +94,7 @@ export default function ReaderArticlePage() {
   const [lead, ...gallery] = article.images;
   const videoId = article.youtubeUrl ? extractYouTubeId(article.youtubeUrl) : null;
 
-  const shareText = `${title} — MALIRA`;
+  const shareText = `${title} — RK Matrimony`;
   const shareUrl =
     typeof window !== "undefined" ? window.location.href : "";
 

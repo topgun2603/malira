@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     environment:
       name: production
-      url: https://malira-rouge.vercel.app
+      url: https://rk-matrimony.vercel.app
 
     env:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -65,4 +65,4 @@ jobs:
           url=$(npx --yes vercel@latest deploy --prod --yes --token "$VERCEL_TOKEN")
           echo "Deployed to $url"
           echo "- Deployment: $url" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Alias: <https://malira-rouge.vercel.app>" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Alias: <https://rk-matrimony.vercel.app>" >> "$GITHUB_STEP_SUMMARY"

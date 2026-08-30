@@ -35,7 +35,7 @@ export function useSeedSampleArticles() {
     mutationFn: () =>
       seedSampleArticles({
         uid: firebaseUser?.uid ?? "",
-        name: profile?.displayName ?? "MALIRA",
+        name: profile?.displayName ?? "RK Matrimony",
       }),
     onSuccess: (result) => {
       const imagePart =

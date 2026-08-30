@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { MaliraMark } from "@/components/shared/malira-mark";
+import { RkMark } from "@/components/shared/rk-mark";
 import { LanguageProvider, useLanguage } from "@/components/reader/language";
 import { SiteHeader } from "@/components/reader/site-header";
 import { PopupAd } from "@/components/reader/ad-slot";
@@ -17,8 +17,8 @@ function SiteFooter() {
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-sm space-y-2">
             <span className="flex items-center gap-2 font-semibold">
-              <MaliraMark className="size-4 rounded" />
-              MALIRA
+              <RkMark className="size-4 rounded" />
+              RK Matrimony
             </span>
             <p className="text-muted-foreground text-sm leading-relaxed">
               {lang === "ta"
@@ -53,7 +53,7 @@ function SiteFooter() {
 
         <div className="text-muted-foreground mt-8 flex flex-col gap-2 border-t pt-6 text-xs sm:flex-row sm:items-center sm:justify-between">
           <p>
-            &copy; MALIRA
+            &copy; RK Matrimony
           </p>
           <Link href="/admin/dashboard" className="hover:text-foreground underline">
             Editorial desk
