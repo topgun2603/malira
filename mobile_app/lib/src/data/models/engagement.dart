@@ -185,7 +185,7 @@ class AppSettings {
   factory AppSettings.fromDoc(DocumentSnapshot<Map<String, dynamic>> doc) {
     final data = doc.data() ?? const <String, dynamic>{};
     return AppSettings(
-      aboutTitle: data.str('aboutTitle', 'About RK Matrimony'),
+      aboutTitle: data.str('aboutTitle', 'About Badaga Matrimony'),
       aboutBody: data.str('aboutBody'),
       aboutBodyTa: data.str('aboutBodyTa'),
       contactEmail: data.str('contactEmail'),
@@ -202,7 +202,7 @@ class AppSettings {
   }
 
   static const empty = AppSettings(
-    aboutTitle: 'About RK Matrimony',
+    aboutTitle: 'About Badaga Matrimony',
     aboutBody: '',
     aboutBodyTa: '',
     contactEmail: '',

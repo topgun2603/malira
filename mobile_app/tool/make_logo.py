@@ -1,19 +1,16 @@
-"""Generate every launcher icon from the palette tokens.
+"""Generate every launcher icon from the supplied brand logo.
 
-The drawing is the same one `lib/src/ui/common/app_logo.dart` paints at runtime:
-a rose field with a nameplate on it — a saffron rule, a heavy M, a cream rule —
-the way a masthead rules itself off.
+The mark is no longer drawn here. `assets/brand/logo.png` is the Badaga
+Matrimony medallion — supplied as artwork, cropped square to its gold ring and
+cut out of the cream sheet it arrived on, so it can sit on any ground without
+carrying a pale rectangle around with it.
 
-It used to be a landscape: ridgelines under a low sun. That is the exact recipe
-for the Material `image` glyph, and on a home screen it read as a photo gallery
-rather than as this app. A horizon is what does it, so there is no horizon here
-— which is also why the RK Matrimony mark is its initials rather than a heart over the
-hills the tagline names. A heart at 48px is every dating app ever shipped. The constants below are copied from `_LogoPainter`, and the
-colours from `lib/src/core/theme/palette.dart` — which are themselves the sRGB
-conversions of the OKLCH tokens in `web-admin/src/app/globals.css`. Nothing
-here invents a colour.
+Because the medallion is circular and self-contained it is used full bleed: at
+48px a disc that fills the tile reads, where the same disc shrunk inside a
+coloured square does not. The ground behind it is the ring's own blue, so a
+launcher that masks to a circle, a squircle or a teardrop only ever cuts blue.
 
-Run it from the `mobile_app` directory after any palette change:
+Run it from the `mobile_app` directory whenever the logo changes:
 
     python tool/make_logo.py
 
@@ -27,132 +24,65 @@ from __future__ import annotations
 import json
 import os
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageChops, ImageDraw
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 # ------------------------------- palette ---------------------------------
-# Palette.lightBrandDeep, Palette.lightBrand (= lightMatrimony), lightSaffron.
-GROUND = (0x5E, 0x1E, 0x3B)
-BRAND = (0x9C, 0x34, 0x64)
-SAFFRON = (0xDD, 0x87, 0x2B)
-# Palette.lightBackground — the paper the desk prints on.
-CREAM = (0xFA, 0xF8, 0xF2)
+# Sampled from the medallion's own ring rather than invented, so the ground and
+# the artwork cannot drift apart if the logo is ever re-cut.
+BLUE = (0x00, 0x18, 0x54)
+
+LOGO = os.path.join("assets", "brand", "logo.png")
 
 # ------------------------------- drawing ---------------------------------
-# Identical to _LogoPainter in app_logo.dart. Every value is a fraction of the
-# icon's side, so one set of numbers serves 16px and 1024px alike.
-#
-# centre-y, thickness, colour. Equal weights: at 48px an unequal pair reads as
-# one rule and a smudge.
-RULES = (
-    (0.245, 0.048, SAFFRON),
-    (0.755, 0.048, CREAM),
-)
-RULE_HALF_WIDTH = 0.34
+# How much of the tile the medallion covers. Full bleed on the square icons;
+# on the adaptive foreground it is sized to fill the circle a launcher actually
+# shows (72 of 108) rather than the smaller guaranteed-safe 66, since clipping a
+# few pixels of outer rim costs nothing and a floating disc looks like a mistake.
+FULL_BLEED = 0.995
+ADAPTIVE_COVER = 76 / 108
 
-# The initials, measured by ink box rather than em box — a cap-height letter
-# sits low in its em, and centring the em would hang it below the rules.
-#
-# Two letters need more room than one: at the single-letter height the pair
-# runs past the ends of the rules and the nameplate stops reading as a frame.
-# Shorter letters inside slightly wider rules keeps the shape and still holds
-# together at 48px.
-GLYPH = "RK"
-GLYPH_HEIGHT = 0.34
-GLYPH_CENTRE = 0.50
-FONT = os.path.join("assets", "fonts", "Geist-Bold.ttf")
-
-# Everything is rendered at this size and resampled down, so a 20 px iOS icon
-# gets the same curve as the 1024 px one instead of a separately-aliased one.
+# Everything is composed at this size and resampled down, so a 20 px iOS icon
+# gets the same edge as the 1024 px one instead of a separately-aliased one.
 SUPER = 1024
 
 IOS = ("ios", "Runner", "Assets.xcassets", "AppIcon.appiconset")
 
 # The corner radius of a legacy square launcher icon, as a fraction of the side.
-# Matches `AppLogo`'s ClipRRect, which uses size * 0.22.
 CORNER = 0.22
-
-# Adaptive icons are 108dp with only the middle 66dp guaranteed visible; a
-# launcher may mask to a circle and parallax the layers apart. 21/108 each side.
-SAFE_INSET = 21 / 108
 
 # A maskable web icon is guaranteed only its middle 80%.
 MASKABLE_INSET = 0.10
 
 
-def _lerp(a, b, t):
-    return tuple(round(x + (y - x) * t) for x, y in zip(a, b))
+def logo(size: int) -> Image.Image:
+    """The medallion, square and transparent outside its ring."""
+    art = Image.open(os.path.join(ROOT, LOGO)).convert("RGBA")
+    return art.resize((size, size), Image.LANCZOS)
 
 
 def field(size: int) -> Image.Image:
-    """The rose ground, top-left to bottom-right."""
-    image = Image.new("RGB", (size, size))
-    pixels = image.load()
-    span = 2 * (size - 1)
-    row_cache = {}
-    for y in range(size):
-        for x in range(size):
-            t = (x + y) / span
-            key = round(t * 2048)
-            colour = row_cache.get(key)
-            if colour is None:
-                colour = row_cache[key] = _lerp(GROUND, BRAND, key / 2048)
-            pixels[x, y] = colour
-    return image
+    """The flat ring blue the medallion sits on."""
+    return Image.new("RGBA", (size, size), BLUE + (255,))
 
 
-def mark(size: int) -> Image.Image:
-    """The nameplate — two rules and the N — on transparency."""
-    layer = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    draw = ImageDraw.Draw(layer)
-
-    for centre, thickness, colour in RULES:
-        half = thickness * size / 2
-        draw.rounded_rectangle(
-            (
-                size * (0.5 - RULE_HALF_WIDTH),
-                centre * size - half,
-                size * (0.5 + RULE_HALF_WIDTH),
-                centre * size + half,
-            ),
-            # Fully rounded ends. A square-cut rule at 48px picks up a stair-step
-            # on the corners that a round one does not.
-            radius=half,
-            fill=colour + (255,),
-        )
-
-    path = os.path.join(ROOT, FONT)
-    # Size the face so the letter's *ink* is GLYPH_HEIGHT tall, whatever the
-    # font's internal metrics happen to be.
-    probe = ImageFont.truetype(path, 400)
-    box = probe.getbbox(GLYPH)
-    font = ImageFont.truetype(path, round(400 * (GLYPH_HEIGHT * size) / (box[3] - box[1])))
-
-    box = font.getbbox(GLYPH)
-    width, height = box[2] - box[0], box[3] - box[1]
-    draw.text(
-        (size / 2 - width / 2 - box[0], GLYPH_CENTRE * size - height / 2 - box[1]),
-        GLYPH,
-        font=font,
-        fill=CREAM + (255,),
-    )
-
-    return layer
+def scene(size: int, cover: float = FULL_BLEED, ground: bool = True) -> Image.Image:
+    """Ground plus medallion, centred."""
+    base = field(size) if ground else Image.new("RGBA", (size, size), (0, 0, 0, 0))
+    side = round(size * cover)
+    mark = logo(side)
+    base.paste(mark, ((size - side) // 2,) * 2, mark)
+    return base
 
 
-def scene(size: int) -> Image.Image:
-    """The full-bleed icon: field, then the nameplate on top of it."""
-    base = field(size).convert("RGBA")
-    return Image.alpha_composite(base, mark(size))
+def cover_mark(size: int, cover: float) -> Image.Image:
+    """The medallion alone at `cover` of the canvas, on transparency.
 
-
-def inset_mark(size: int, inset: float) -> Image.Image:
-    """The mark alone, scaled into the centre of a transparent canvas."""
-    side = round(size * (1 - 2 * inset))
-    layer = Image.new("RGBA", (size, size), (0, 0, 0, 0))
-    layer.paste(mark(SUPER).resize((side, side), Image.LANCZOS), (round(size * inset),) * 2)
-    return layer
+    Used for the adaptive foreground, which the launcher parallaxes over the
+    background layer and then masks — so this must carry no ground of its own.
+    """
+    return scene(size, cover=cover, ground=False)
 
 
 def _mask(size: int, circle: bool) -> Image.Image:
@@ -170,7 +100,9 @@ def tile(size: int, shape: str = "rounded") -> Image.Image:
     image = scene(SUPER).resize((size, size), Image.LANCZOS)
     if shape == "square":
         return image
-    image.putalpha(_mask(size, circle=shape == "round"))
+    # Multiply rather than replace: the medallion already carries its own alpha
+    # and overwriting it would square off the artwork inside the corner mask.
+    image.putalpha(ImageChops.multiply(image.split()[3], _mask(size, circle=shape == "round")))
     return image
 
 
@@ -179,7 +111,7 @@ def write(image: Image.Image, *parts: str, opaque: bool = False) -> None:
     os.makedirs(os.path.dirname(path), exist_ok=True)
     if opaque:
         # An iOS app icon with an alpha channel is rejected at submission.
-        flat = Image.new("RGB", image.size, GROUND)
+        flat = Image.new("RGB", image.size, BLUE)
         flat.paste(image, mask=image.split()[3] if image.mode == "RGBA" else None)
         image = flat
     image.save(path)
@@ -197,8 +129,8 @@ def main() -> None:
         legacy, adaptive = round(48 * dp), round(108 * dp)
         write(tile(legacy), *res, "ic_launcher.png")
         write(tile(legacy, "round"), *res, "ic_launcher_round.png")
-        write(field(adaptive).convert("RGBA"), *res, "ic_launcher_background.png")
-        write(inset_mark(adaptive, SAFE_INSET), *res, "ic_launcher_foreground.png")
+        write(field(adaptive), *res, "ic_launcher_background.png")
+        write(cover_mark(adaptive, ADAPTIVE_COVER), *res, "ic_launcher_foreground.png")
 
     print("ios")
     with open(os.path.join(ROOT, *IOS, "Contents.json"), encoding="utf-8") as handle:
@@ -214,9 +146,9 @@ def main() -> None:
     write(tile(192), "web", "icons", "Icon-192.png")
     write(tile(512), "web", "icons", "Icon-512.png")
     for size in (192, 512):
-        # Full-bleed ground, mark pulled into the guaranteed-visible middle.
-        maskable = field(size).convert("RGBA")
-        maskable.alpha_composite(inset_mark(size, MASKABLE_INSET))
+        # Ground to the edge, medallion inside the guaranteed-visible middle.
+        maskable = field(size)
+        maskable.alpha_composite(cover_mark(size, 1 - 2 * MASKABLE_INSET))
         write(maskable, "web", "icons", f"Icon-maskable-{size}.png")
     write(tile(16), "web", "favicon.png")
 

@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { Crown, HeartHandshake, Inbox, Search, UserRound } from "lucide-react";
+import { useMemo, useRef, useState } from "react";
+import { Crown, HeartHandshake, Inbox, Search, UserRound, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -42,6 +42,9 @@ export function MatrimonyBrowse() {
   const [maxAge, setMaxAge] = useState("");
   const [search, setSearch] = useState("");
 
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const blurTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
   const { data: profiles, isLoading } = useProfileSearch({
     gender,
     maritalStatus,
@@ -50,6 +53,46 @@ export function MatrimonyBrowse() {
     maxAge: maxAge ? Number(maxAge) : undefined,
     search,
   });
+
+  // The same page with the term removed.
+  //
+  // Suggestions have to be drawn from the profiles the term has not yet ruled
+  // out — taking them from the results would only ever offer back what is
+  // already on screen. The key is stable while somebody types, so this is
+  // fetched once and answered from cache for every keystroke after.
+  const { data: pool } = useProfileSearch({
+    gender,
+    maritalStatus,
+    diet,
+    minAge: minAge ? Number(minAge) : undefined,
+    maxAge: maxAge ? Number(maxAge) : undefined,
+    search: "",
+  });
+
+  const suggestions = useMemo(() => {
+    const term = search.trim().toLowerCase();
+    if (!term) return [] as string[];
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const profile of pool ?? []) {
+      for (const candidate of [
+        profile.name,
+        profile.hometown,
+        profile.occupation,
+      ]) {
+        const value = candidate?.trim();
+        if (!value) continue;
+        const lower = value.toLowerCase();
+        // Offering back exactly what is already typed gains nothing.
+        if (lower === term || !lower.includes(term)) continue;
+        if (seen.has(lower)) continue;
+        seen.add(lower);
+        out.push(value);
+        if (out.length === 6) return out;
+      }
+    }
+    return out;
+  }, [pool, search]);
 
   const { data: received } = useReceivedInterests();
   const pending = (received ?? []).filter((i) => i.status === "sent").length;
@@ -115,9 +158,54 @@ export function MatrimonyBrowse() {
               placeholder={
                 lang === "ta" ? "கல்வி, தொழில், ஊர்" : "Education, work, town"
               }
-              className="pl-9"
-              onChange={(event) => setSearch(event.target.value)}
+              className="pr-9 pl-9"
+              onChange={(event) => {
+                setSearch(event.target.value);
+                setSuggestOpen(true);
+              }}
+              onFocus={() => setSuggestOpen(true)}
+              // Closing on blur has to outlast the click that caused it, or
+              // choosing a suggestion would dismiss the list before the mousedown
+              // ever reaches it.
+              onBlur={() => {
+                blurTimer.current = setTimeout(() => setSuggestOpen(false), 120);
+              }}
             />
+            {search && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  setSuggestOpen(false);
+                }}
+                aria-label={lang === "ta" ? "தேடலை அழி" : "Clear search"}
+                className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-1 flex size-7 -translate-y-1/2 items-center justify-center rounded-md focus-visible:ring-2 focus-visible:outline-none"
+              >
+                <X className="size-4" />
+              </button>
+            )}
+            {suggestOpen && suggestions.length > 0 && (
+              <ul className="bg-popover text-popover-foreground absolute top-full right-0 left-0 z-20 mt-1 overflow-hidden rounded-md border shadow-md">
+                {suggestions.map((suggestion) => (
+                  <li key={suggestion}>
+                    <button
+                      type="button"
+                      className="hover:bg-accent hover:text-accent-foreground flex w-full items-center gap-2 px-3 py-2 text-left text-sm"
+                      onMouseDown={() => {
+                        if (blurTimer.current) clearTimeout(blurTimer.current);
+                      }}
+                      onClick={() => {
+                        setSearch(suggestion);
+                        setSuggestOpen(false);
+                      }}
+                    >
+                      <Search className="text-muted-foreground size-3.5 shrink-0" />
+                      <span className="truncate">{suggestion}</span>
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
           </div>
         </div>
 

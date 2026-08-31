@@ -108,7 +108,7 @@ function useEventActor() {
   const { firebaseUser, profile } = useAuth();
   return {
     uid: firebaseUser?.uid ?? "",
-    name: profile?.displayName ?? "RK Matrimony",
+    name: profile?.displayName ?? "Badaga Matrimony",
   };
 }
 

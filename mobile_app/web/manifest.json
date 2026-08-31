@@ -1,11 +1,11 @@
 {
-    "name": "RK Matrimony",
-    "short_name": "RK",
+    "name": "Badaga Matrimony",
+    "short_name": "Badaga",
     "start_url": ".",
     "display": "standalone",
     "background_color": "#FCFBF8",
     "theme_color": "#9C3464",
-    "description": "RK Matrimony — Love, Rooted in the Hills.",
+    "description": "Badaga Matrimony — Love, Rooted in the Hills.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

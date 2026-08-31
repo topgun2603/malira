@@ -534,7 +534,7 @@ export interface AppSettings {
 }
 
 export const DEFAULT_SETTINGS: Omit<AppSettings, "updatedAt" | "updatedBy"> = {
-  aboutTitle: "About RK Matrimony",
+  aboutTitle: "About Badaga Matrimony",
   aboutBody: "",
   aboutBodyTa: "",
   contactEmail: "",
@@ -653,6 +653,15 @@ export interface MatrimonyProfile {
   hasPhotos: boolean;
 
   status: MatrimonyStatus;
+  /**
+   * The status a pause was taken from, and null whenever the listing is not
+   * paused.
+   *
+   * Kept so resuming can tell a listing that had already cleared review from
+   * one that never had. Written by the client but constrained by the rules:
+   * it may only ever name the status actually being left.
+   */
+  pausedFrom: MatrimonyStatus | null;
   reviewNote: string | null;
   reviewedBy: string | null;
   reviewedAt: Timestamp | null;

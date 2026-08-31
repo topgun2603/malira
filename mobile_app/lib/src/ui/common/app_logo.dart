@@ -1,22 +1,21 @@
 import 'package:flutter/material.dart';
 
+import '../../core/l10n/strings.dart';
 import '../../core/theme/app_theme.dart';
 import '../../core/theme/palette.dart';
 
-/// The RK Matrimony mark.
+/// The Badaga Matrimony mark.
 ///
-/// The same drawing as the launcher icon — a saffron rule, a heavy M, a cream
-/// rule, the way a masthead rules itself off — but painted rather than shipped
-/// as a bitmap, so it is crisp at any size and takes its colours from the theme
-/// instead of being baked at one tint.
+/// The supplied medallion, not a drawing. It used to be painted here — a
+/// nameplate built from rules and initials — which meant the app and the
+/// launcher were two drawings that had to be kept in step by hand. Both now
+/// come from `assets/brand/logo.png`: the widget shows it directly and
+/// `tool/make_logo.py` generates every launcher icon from the same file, so
+/// they cannot disagree.
 ///
-/// It used to be a landscape: layered ridgelines under a low sun. The intent
-/// was the hills the tagline names, but a horizon with a sun over it is
-/// precisely the Material `image` glyph, and on a home screen full of other
-/// apps it read as a photo gallery. Nothing here draws a horizon — and for the
-/// same reason nothing here draws a heart, which at 48px is every dating app
-/// ever shipped. The initial is the one shape on the launcher that belongs to
-/// this app alone.
+/// The artwork is already circular and carries its own alpha outside the gold
+/// ring, so it needs no tile of its own. [rounded] paints the ring's blue
+/// behind it for the places that want a solid app-icon-shaped block.
 class AppLogo extends StatelessWidget {
   const AppLogo({
     super.key,
@@ -26,128 +25,35 @@ class AppLogo extends StatelessWidget {
 
   final double size;
 
-  /// The rose tile behind the mark. Off when the logo sits on a coloured
-  /// surface already, where a second filled square would only add an edge.
+  /// The blue tile behind the medallion. Off when the mark sits on artwork or
+  /// on the rail already, where a second block would only add an edge.
   final bool rounded;
+
+  /// Sampled from the medallion's own ring, so ground and artwork cannot drift.
+  static const ground = Color(0xFF001854);
 
   @override
   Widget build(BuildContext context) {
-    final brand = context.brand;
+    final image = Image.asset(
+      'assets/brand/logo.png',
+      height: size,
+      width: size,
+      // The medallion is detailed; letting it scale smoothly matters more here
+      // than the few microseconds saved by nearest-neighbour.
+      filterQuality: FilterQuality.medium,
+    );
+
+    if (!rounded) return SizedBox(height: size, width: size, child: image);
 
     return SizedBox(
       height: size,
       width: size,
       child: ClipRRect(
-        borderRadius: BorderRadius.circular(rounded ? size * 0.22 : 0),
-        child: CustomPaint(
-          painter: _LogoPainter(
-            background: rounded ? Palette.lightBrandDeep : Colors.transparent,
-            far: Palette.lightBrand,
-            rule: brand.saffron,
-          ),
-        ),
+        borderRadius: BorderRadius.circular(size * 0.22),
+        child: ColoredBox(color: ground, child: image),
       ),
     );
   }
-}
-
-class _LogoPainter extends CustomPainter {
-  const _LogoPainter({
-    required this.background,
-    required this.far,
-    required this.rule,
-  });
-
-  final Color background;
-
-  /// The hill blue the navy field ramps into.
-  final Color far;
-
-  /// The saffron rule above the letter. The one below is always paper.
-  final Color rule;
-
-  /// centre-y, thickness, and whether this rule is the saffron one — identical
-  /// to RULES in tool/make_logo.py, so the painted mark and the launcher icon
-  /// are the same drawing. Fractions of the side, so one set of numbers serves
-  /// a 20px avatar and a 512px splash alike.
-  static const _rules = <(double, double, bool)>[
-    (0.245, 0.048, true),
-    (0.755, 0.048, false),
-  ];
-  static const _ruleHalfWidth = 0.34;
-  static const _glyphHeight = 0.34;
-
-  /// Palette.lightBackground — the paper the desk prints on.
-  static const _paper = Color(0xFFFAF8F2);
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-
-    if (background.a > 0) {
-      canvas.drawRect(
-        rect,
-        Paint()
-          ..shader = LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [background, far],
-          ).createShader(rect),
-      );
-    }
-
-    for (final (centre, thickness, saffron) in _rules) {
-      final half = thickness * size.width / 2;
-      canvas.drawRRect(
-        RRect.fromRectAndRadius(
-          Rect.fromLTRB(
-            size.width * (0.5 - _ruleHalfWidth),
-            centre * size.height - half,
-            size.width * (0.5 + _ruleHalfWidth),
-            centre * size.height + half,
-          ),
-          Radius.circular(half),
-        ),
-        Paint()..color = saffron ? rule : _paper,
-      );
-    }
-
-    // Laid out once at a nominal size and then scaled, so the letter's height
-    // is set by its ink rather than by the font's em box — a cap-height N sits
-    // low in its em, and centring the em would hang it below the rules.
-    final painter = TextPainter(
-      text: const TextSpan(
-        text: 'RK',
-        style: TextStyle(
-          fontFamily: 'Geist',
-          fontWeight: FontWeight.w700,
-          color: _paper,
-          height: 1,
-          fontSize: 100,
-        ),
-      ),
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    // `height: 1` pins the line box to the font size, so the cap sits a known
-    // fraction down it; 0.72 is Geist's cap height in ems.
-    const capHeight = 0.72;
-    final scale = (_glyphHeight * size.height) / (100 * capHeight);
-
-    canvas.save();
-    canvas.translate(size.width / 2, size.height / 2);
-    canvas.scale(scale);
-    // The glyph's ink is centred in the line box at (0, -50 + ascent gap); a
-    // straight -height/2 is close enough once the cap height is honoured.
-    painter.paint(canvas, Offset(-painter.width / 2, -painter.height / 2));
-    canvas.restore();
-  }
-
-  @override
-  bool shouldRepaint(covariant _LogoPainter oldDelegate) =>
-      oldDelegate.background != background ||
-      oldDelegate.far != far ||
-      oldDelegate.rule != rule;
 }
 
 /// The mark next to the wordmark, for headers and the onboarding.
@@ -194,6 +100,62 @@ class AppLogoLockup extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+}
+
+/// The name, set as the two lines it is actually read in.
+///
+/// "Badaga" carries the identity and takes the gold and the size; "Matrimony"
+/// says what the thing is and sits under it, quieter and letterspaced so it
+/// reads as a classification rather than a second name.
+///
+/// One [Text.rich] rather than two stacked [Text]s: the pair is one phrase to a
+/// screen reader, and a hard newline inside a single block keeps the break
+/// where it was drawn no matter how far the reader has pushed the text size.
+class AppWordmark extends StatelessWidget {
+  const AppWordmark({
+    super.key,
+    required this.strings,
+    this.color,
+    this.textAlign = TextAlign.center,
+  });
+
+  final Strings strings;
+
+  /// Colour of the second line. The first is always the gold, which is the
+  /// point of the lockup.
+  final Color? color;
+
+  final TextAlign textAlign;
+
+  @override
+  Widget build(BuildContext context) {
+    return Text.rich(
+      TextSpan(
+        children: [
+          TextSpan(
+            text: strings.brandName,
+            style: context.texts.displayMedium?.copyWith(
+              color: context.brand.gold,
+              fontWeight: FontWeight.w700,
+              letterSpacing: 1.5,
+              height: 1.02,
+            ),
+          ),
+          const TextSpan(text: '\n'),
+          TextSpan(
+            text: strings.brandKind,
+            style: context.texts.titleLarge?.copyWith(
+              color: color ?? context.scheme.onSurface,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 4,
+              height: 1.4,
+            ),
+          ),
+        ],
+      ),
+      textAlign: textAlign,
     );
   }
 }

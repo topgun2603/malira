@@ -1,5 +1,5 @@
 name: nilgiri_news
-description: "RK Matrimony — Love, Rooted in the Hills. Matrimony, news, events and songs for the Nilgiris."
+description: "Badaga Matrimony — Love, Rooted in the Hills. Matrimony, news, events and songs for the Nilgiris."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -72,6 +72,12 @@ flutter:
     # sky is where that was checked, since a gradient is what would band.
     - assets/matrimony/login_light.webp
     - assets/matrimony/login_dark.webp
+
+    # The brand medallion, cropped square to its gold ring and cut out of the
+    # cream sheet it was supplied on, so it can sit on any surface. Same file
+    # the launcher icons are generated from, so the mark on the sign-in screen
+    # and the mark on the home screen cannot drift apart.
+    - assets/brand/logo.png
 
   # Bundled, not fetched at runtime. The audience is rural and often on a poor
   # connection; typography that depends on a successful network call is

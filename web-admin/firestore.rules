@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // -----------------------------------------------------------------------------
-// RK Matrimony — Firestore security rules
+// Badaga Matrimony — Firestore security rules
 //
 // The permission matrix in src/lib/permissions.ts mirrors these rules so the UI
 // can hide what would fail. THIS file is the enforcement layer. Anything the UI
@@ -286,10 +286,34 @@ service cloud.firestore {
       // A member may edit their own listing, pause it, or mark it fixed — but
       // may never move it to 'approved'. Editing returns it to the queue,
       // because an edited profile has not been reviewed in its current form.
+      //
+      // Resuming is the one exception. A listing that was already approved when
+      // it was paused goes straight back to approved: nothing about it changed
+      // while it was hidden, and sending it round the queue again costs the
+      // moderator a review and the member another day off the site — worse when
+      // the pause was a misclick on a profile that had already matched.
+      //
+      // Two guards stop that becoming a way around review. Pausing may only
+      // record the status it is actually leaving, so a pending listing cannot
+      // pause as though it were approved; and the resume may touch nothing but
+      // the status, so the profile that comes back is the one that was passed.
+      // `get` rather than a bare field read: listings paused by an older build
+      // carry no `pausedFrom`, and those simply resume into the queue.
       allow update: if isMatrimonyModerator()
         || (request.auth.uid == uid
             && request.resource.data.ownerUid == uid
-            && request.resource.data.status in ['pending', 'paused', 'married']);
+            && (
+                 request.resource.data.status in ['pending', 'married']
+              || (request.resource.data.status == 'paused'
+                  && (request.resource.data.get('pausedFrom', '') == ''
+                      || request.resource.data.pausedFrom == resource.data.status))
+              || (request.resource.data.status == 'approved'
+                  && resource.data.status == 'paused'
+                  && resource.data.get('pausedFrom', '') == 'approved'
+                  && request.resource.data.diff(resource.data)
+                       .affectedKeys()
+                       .hasOnly(['status', 'pausedFrom', 'updatedAt']))
+            ));
 
       allow delete: if isMatrimonyModerator() || request.auth.uid == uid;
     }

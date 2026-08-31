@@ -20,7 +20,12 @@ function Gated() {
   const { data: profile, isLoading } = useMyProfile();
 
   if (isLoading) return <FullPageSpinner label="Loading matrimony..." />;
-  if (!profile || profile.status !== "approved") {
+  // Waiting on a moderator is not the same as never having listed. Somebody in
+  // the queue has already put themselves in front of the people they are about
+  // to look at, which is the whole point of the gate, and the app has always
+  // let them browse — holding them here only made the two products disagree
+  // about the same account on the same day.
+  if (!profile || (profile.status !== "approved" && profile.status !== "pending")) {
     return <MatrimonyOnboarding profile={profile ?? null} />;
   }
   return <MatrimonyBrowse />;

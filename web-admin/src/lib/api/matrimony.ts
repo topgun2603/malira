@@ -85,6 +85,7 @@ function toProfile(id: string, data: Record<string, unknown>): MatrimonyProfile 
     photos: (data.photos as ArticleImage[]) ?? [],
     hasPhotos: Boolean(data.hasPhotos),
     status: (data.status as MatrimonyStatus) ?? "pending",
+    pausedFrom: (data.pausedFrom as MatrimonyStatus) ?? null,
     reviewNote: (data.reviewNote as string) ?? null,
     reviewedBy: (data.reviewedBy as string) ?? null,
     reviewedAt: (data.reviewedAt as MatrimonyProfile["reviewedAt"]) ?? null,
@@ -221,6 +222,10 @@ export async function saveProfile(
       photos: restricted ? [] : draft.photos,
       hasPhotos: draft.photos.length > 0,
       status: "pending" as MatrimonyStatus,
+      // An edit clears the pause it may have been carrying: the profile a
+      // moderator approved is not the profile now on the document, so there is
+      // nothing left to resume straight back into.
+      pausedFrom: null,
       reviewNote: null,
       updatedAt: serverTimestamp(),
       ...(isNew ? { createdAt: serverTimestamp(), viewCount: 0 } : {}),
@@ -252,8 +257,38 @@ export async function saveProfile(
 export async function setOwnStatus(
   uid: string,
   status: Extract<MatrimonyStatus, "paused" | "married" | "pending">,
+  /** Required when pausing: the status being left, which the rules verify. */
+  current?: MatrimonyStatus,
 ): Promise<void> {
-  await updateDoc(profileDoc(uid), { status, updatedAt: serverTimestamp() });
+  await updateDoc(profileDoc(uid), {
+    status,
+    ...(status === "paused" ? { pausedFrom: current ?? null } : {}),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Put a paused listing back.
+ *
+ * A listing that was approved when it was paused returns to approved rather
+ * than to the back of the queue: nothing about it changed while it was hidden,
+ * so there is nothing for a moderator to read a second time. One that was
+ * still pending resumes as pending, where it already was.
+ */
+export async function resumeOwnListing(
+  uid: string,
+  pausedFrom: MatrimonyStatus | null,
+): Promise<MatrimonyStatus> {
+  const status: MatrimonyStatus =
+    pausedFrom === "approved" ? "approved" : "pending";
+  // Exactly these three keys: the rules allow the return to approved only if
+  // nothing else on the profile moves with it.
+  await updateDoc(profileDoc(uid), {
+    status,
+    pausedFrom: null,
+    updatedAt: serverTimestamp(),
+  });
+  return status;
 }
 
 export async function deleteProfile(uid: string): Promise<void> {

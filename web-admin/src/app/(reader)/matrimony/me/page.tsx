@@ -42,6 +42,7 @@ import {
   useSaveProfile,
   useSentInterests,
   useSetOwnStatus,
+  useResumeOwnListing,
   useWithdrawInterest,
 } from "@/hooks/use-matrimony";
 import { validateProfile, type ProfileDraft } from "@/lib/api/matrimony";
@@ -102,6 +103,7 @@ function MyMatrimony() {
   const { data: contact, isLoading: contactLoading } = useMyContact();
   const saveProfile = useSaveProfile();
   const setStatus = useSetOwnStatus();
+  const resume = useResumeOwnListing();
   const deleteProfile = useDeleteMyProfile();
 
   const { data: sent } = useSentInterests();
@@ -206,21 +208,30 @@ function MyMatrimony() {
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setStatus.mutate("paused")}
+                onClick={() =>
+                  setStatus.mutate({ status: "paused", current: profile.status })
+                }
               >
                 Pause listing
               </Button>
               <Button
                 size="sm"
                 variant="outline"
-                onClick={() => setStatus.mutate("married")}
+                onClick={() => setStatus.mutate({ status: "married" })}
               >
                 Marriage fixed
               </Button>
             </>
           )}
           {profile.status === "paused" && (
-            <Button size="sm" onClick={() => setStatus.mutate("pending")}>
+            <Button
+              size="sm"
+              // Resuming restores what the pause interrupted rather than
+              // resubmitting: a listing that was live when it was paused goes
+              // straight back to live.
+              onClick={() => resume.mutate(profile.pausedFrom)}
+              disabled={resume.isPending}
+            >
               Resume listing
             </Button>
           )}

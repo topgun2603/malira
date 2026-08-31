@@ -210,7 +210,6 @@ class _GateContent extends StatelessWidget {
     // Not the theme's onSurface: the backdrop is a painting, and in the light
     // theme it stays cream whatever the rest of the app is doing.
     final ink = context.backdropInk;
-    final muted = context.backdropMutedInk;
     final accent = context.backdropAccent;
 
     // The mark and the name are the masthead of the section and the painting
@@ -225,21 +224,7 @@ class _GateContent extends StatelessWidget {
             children: [
               const AppLogo(size: 52),
               const SizedBox(height: Gap.lg),
-              Text(
-                strings.appName,
-                textAlign: TextAlign.center,
-                style: context.texts.displaySmall?.copyWith(
-                  color: ink,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.5,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                strings.tagline,
-                textAlign: TextAlign.center,
-                style: context.texts.titleSmall?.copyWith(color: muted),
-              ),
+              AppWordmark(strings: strings, color: ink),
             ],
           ),
         ),
@@ -403,17 +388,76 @@ class _SearchBar extends ConsumerStatefulWidget {
 
 class _SearchBarState extends ConsumerState<_SearchBar> {
   final _controller = TextEditingController();
+  final _focus = FocusNode();
+
+  /// What is in the field, which is not the same as the term being searched on.
+  ///
+  /// The term is only applied on submit. Tracking the two apart is what lets
+  /// the clear control appear the moment there is something to clear, and lets
+  /// the suggestions follow the typing rather than the last search.
+  String _typed = '';
 
   @override
   void initState() {
     super.initState();
     _controller.text = ref.read(matrimonyFiltersProvider).search;
+    _typed = _controller.text;
+    _controller.addListener(() {
+      if (_controller.text != _typed) {
+        setState(() => _typed = _controller.text);
+      }
+    });
+    _focus.addListener(() => setState(() {}));
   }
 
   @override
   void dispose() {
     _controller.dispose();
+    _focus.dispose();
     super.dispose();
+  }
+
+  void _commit(String value) {
+    _controller.value = TextEditingValue(
+      text: value,
+      selection: TextSelection.collapsed(offset: value.length),
+    );
+    ref.read(matrimonyFiltersProvider.notifier).setSearch(value);
+    _focus.unfocus();
+  }
+
+  /// Names, towns and occupations from the profiles already loaded that contain
+  /// what has been typed so far.
+  ///
+  /// Drawn from the results on screen rather than a query per keystroke: the
+  /// term is applied on submit, so while somebody is typing, the list behind
+  /// this field is still the one they are narrowing. It costs no reads, and it
+  /// can only ever offer something that will actually return a profile.
+  List<String> _suggestions() {
+    final term = _typed.trim().toLowerCase();
+    if (term.isEmpty) return const [];
+
+    final profiles = ref.watch(matrimonySearchProvider).value ?? const [];
+    final seen = <String>{};
+    final out = <String>[];
+
+    for (final profile in profiles) {
+      for (final candidate in [
+        profile.name,
+        profile.hometown,
+        profile.occupation,
+      ]) {
+        final value = candidate.trim();
+        if (value.isEmpty) continue;
+        final lower = value.toLowerCase();
+        // Offering back exactly what is already typed gains nothing.
+        if (lower == term || !lower.contains(term)) continue;
+        if (!seen.add(lower)) continue;
+        out.add(value);
+        if (out.length == 6) return out;
+      }
+    }
+    return out;
   }
 
   @override
@@ -423,46 +467,103 @@ class _SearchBarState extends ConsumerState<_SearchBar> {
     final active = ref.watch(
       matrimonyFiltersProvider.select((filters) => filters.activeCount),
     );
+    final suggestions = _focus.hasFocus ? _suggestions() : const <String>[];
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(Gap.page, Gap.md, Gap.page, Gap.sm),
-      child: Row(
+      child: Column(
         children: [
-          Expanded(
-            child: TextField(
-              controller: _controller,
-              onSubmitted: (value) =>
-                  ref.read(matrimonyFiltersProvider.notifier).setSearch(value),
-              textInputAction: TextInputAction.search,
-              style: context.texts.bodyMedium?.copyWith(
-                color: context.scheme.onSurface,
-              ),
-              decoration: InputDecoration(
-                hintText: strings.matrimonySearchHint,
-                hintStyle: context.texts.bodyMedium,
-                prefixIcon: const Icon(Icons.search, size: 20),
-                isDense: true,
-                filled: true,
-                fillColor: brand.muted,
-                contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(Radii.md),
-                  borderSide: BorderSide.none,
+          Row(
+            children: [
+              Expanded(
+                child: TextField(
+                  controller: _controller,
+                  focusNode: _focus,
+                  onSubmitted: _commit,
+                  textInputAction: TextInputAction.search,
+                  style: context.texts.bodyMedium?.copyWith(
+                    color: context.scheme.onSurface,
+                  ),
+                  decoration: InputDecoration(
+                    hintText: strings.matrimonySearchHint,
+                    hintStyle: context.texts.bodyMedium,
+                    prefixIcon: const Icon(Icons.search, size: 20),
+                    // Clearing puts the list back rather than only emptying the
+                    // field: dropping the committed term is the point, and an
+                    // empty box over filtered results is how this looked before.
+                    suffixIcon: _typed.isEmpty
+                        ? null
+                        : IconButton(
+                            icon: const Icon(Icons.close, size: 18),
+                            tooltip: strings.clearSearch,
+                            onPressed: () => _commit(''),
+                          ),
+                    isDense: true,
+                    filled: true,
+                    fillColor: brand.muted,
+                    contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(Radii.md),
+                      borderSide: BorderSide.none,
+                    ),
+                  ),
                 ),
               ),
-            ),
+              const SizedBox(width: Gap.sm),
+              Badge(
+                isLabelVisible: active > 0,
+                label: Text('$active'),
+                backgroundColor: brand.saffron,
+                child: IconButton.filledTonal(
+                  onPressed: () => showMatrimonyFilterSheet(context),
+                  icon: const Icon(Icons.tune),
+                  tooltip: strings.filters,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(width: Gap.sm),
-          Badge(
-            isLabelVisible: active > 0,
-            label: Text('$active'),
-            backgroundColor: brand.saffron,
-            child: IconButton.filledTonal(
-              onPressed: () => showMatrimonyFilterSheet(context),
-              icon: const Icon(Icons.tune),
-              tooltip: strings.filters,
+          if (suggestions.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.only(top: Gap.xs),
+              decoration: BoxDecoration(
+                color: context.scheme.surface,
+                borderRadius: BorderRadius.circular(Radii.md),
+                border: Border.all(color: brand.border),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  for (final suggestion in suggestions)
+                    InkWell(
+                      onTap: () => _commit(suggestion),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: Gap.md,
+                          vertical: Gap.sm,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.search,
+                              size: 16,
+                              color: brand.mutedForeground,
+                            ),
+                            const SizedBox(width: Gap.sm),
+                            Expanded(
+                              child: Text(
+                                suggestion,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: context.texts.bodyMedium,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             ),
-          ),
         ],
       ),
     );
@@ -596,16 +697,22 @@ class _MyProfileSummary extends ConsumerWidget {
         Divider(color: brand.border),
         const SizedBox(height: Gap.md),
 
-        // Status controls. `approved` is deliberately absent: the rules refuse
-        // it from an owner, and offering a button that always fails would be
-        // worse than not offering one.
+        // Status controls. `approved` is not offered directly: the rules refuse
+        // it from an owner except as the far end of a resume, which is what the
+        // resume action below performs.
         if (profile.status != MatrimonyStatus.paused)
           _StatusAction(
             icon: Icons.pause_circle_outline,
             label: strings.pauseProfile,
             onTap: () => ref
                 .read(matrimonyRepositoryProvider)
-                .setOwnStatus(profile.id, MatrimonyStatus.paused),
+                .setOwnStatus(
+                  profile.id,
+                  MatrimonyStatus.paused,
+                  // Recorded so the resume knows whether this listing had
+                  // already cleared review.
+                  current: profile.status,
+                ),
           ),
         if (profile.status == MatrimonyStatus.paused)
           _StatusAction(
@@ -613,7 +720,7 @@ class _MyProfileSummary extends ConsumerWidget {
             label: strings.resumeProfile,
             onTap: () => ref
                 .read(matrimonyRepositoryProvider)
-                .setOwnStatus(profile.id, MatrimonyStatus.pending),
+                .resumeOwnListing(profile.id, profile.pausedFrom),
           ),
         if (profile.status != MatrimonyStatus.married)
           _StatusAction(

@@ -45,11 +45,16 @@ class Strings {
   String _t(String en, String ta) => isTamil ? ta : en;
 
   // ------------------------------- Masthead --------------------------------
-  String get appName => _t('RK Matrimony', 'RK திருமணம்');
+  String get appName => _t('Badaga Matrimony', 'படகர் திருமணம்');
 
-  /// The tagline under the wordmark.
-  String get tagline =>
-      _t('Love, Rooted in the Hills', 'மலைகளில் வேரூன்றிய அன்பு');
+  /// The name, split where it is read.
+  ///
+  /// [appName] stays whole for the places that want one line of it — a
+  /// window title, a settings heading, a row in the drawer. The masthead
+  /// sets these two, because the community is the name and the service is
+  /// what it does, and stacking them says so at a glance.
+  String get brandName => _t('Badaga', 'படகர்');
+  String get brandKind => _t('Matrimony', 'திருமணம்');
   String get todayFromDistrict =>
       _t('Today from the district', 'இன்றைய செய்திகள்');
   String get mastheadBlurb => _t(
@@ -315,6 +320,7 @@ class Strings {
     'நீலகிரி குடும்பங்களின் திருமணத் தகவல்கள், ஒவ்வொன்றும் பரிசீலனைக்குப் பிறகு வெளியிடப்படும்.',
   );
   String get browseProfiles => _t('Browse profiles', 'தகவல்களைப் பார்');
+  String get clearSearch => _t('Clear search', 'தேடலை அழி');
   String get matrimonySearchHint => _t(
     'Search name, work or town',
     'பெயர், தொழில் அல்லது ஊர்',

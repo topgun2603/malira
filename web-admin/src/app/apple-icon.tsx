@@ -1,16 +1,22 @@
+import { readFile } from "node:fs/promises";
+import { join } from "node:path";
 import { ImageResponse } from "next/og";
 
 export const size = { width: 180, height: 180 };
 export const contentType = "image/png";
 
 /**
- * The home-screen icon for iOS, which will not take an SVG.
+ * The home-screen icon for iOS.
  *
- * Generated at build time rather than checked in as a binary, so the one place
- * the brand rose is written stays the one place it is written. Same nameplate
- * as `icon.svg` and as the Flutter launcher icon, scaled from 32 to 180.
+ * The same medallion as `icon.png` and the Flutter launcher icons, on the
+ * ring's own blue so that whatever shape iOS masks it to only ever cuts blue.
+ * Read from disk and inlined as a data URI because ImageResponse renders on
+ * the server with no origin to fetch a relative path from.
  */
-export default function AppleIcon() {
+export default async function AppleIcon() {
+  const logo = await readFile(join(process.cwd(), "public", "brand", "logo.png"));
+  const src = `data:image/png;base64,${logo.toString("base64")}`;
+
   return new ImageResponse(
     (
       <div
@@ -20,23 +26,11 @@ export default function AppleIcon() {
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          background: "linear-gradient(135deg, #5E1E3B 0%, #9C3464 100%)",
+          background: "#001854",
         }}
       >
-        <svg width="180" height="180" viewBox="0 0 32 32">
-          <rect x="5.1" y="7.1" width="21.8" height="1.6" rx="0.8" fill="#DD872B" />
-          <rect x="5.1" y="23.3" width="21.8" height="1.6" rx="0.8" fill="#FAF8F2" />
-          <g
-            fill="none"
-            stroke="#FAF8F2"
-            strokeWidth="2.6"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          >
-            <path d="M8.6 21V11h3.6a2.3 2.3 0 0 1 0 4.6H8.6m2.7 0L15.2 21" />
-            <path d="M18 11v10M24 11l-5.8 5.3M20.2 14.4 24.4 21" />
-          </g>
-        </svg>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src={src} width={180} height={180} alt="" />
       </div>
     ),
     size,

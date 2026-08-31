@@ -1,4 +1,4 @@
-# RK Matrimony
+# Badaga Matrimony
 
 The association's matrimony service and newsroom, in two halves that share one
 Firebase project.

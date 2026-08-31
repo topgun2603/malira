@@ -30,10 +30,10 @@ const notoTamil = Noto_Sans_Tamil({
 
 export const metadata: Metadata = {
   title: {
-    default: "RK Matrimony",
-    template: "%s · RK Matrimony",
+    default: "Badaga Matrimony",
+    template: "%s · Badaga Matrimony",
   },
-  description: "RK Matrimony — Love, Rooted in the Hills.",
+  description: "Badaga Matrimony — Love, Rooted in the Hills.",
 };
 
 export const viewport: Viewport = {

@@ -4,8 +4,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
-import { Loader2 } from "lucide-react";
-import { RkMark } from "@/components/shared/rk-mark";
+import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { BrandMark } from "@/components/shared/brand-mark";
 import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -45,6 +45,7 @@ function LoginForm() {
   const destination = next && next.startsWith("/") ? next : "/admin/dashboard";
   const [error, setError] = useState<string | null>(null);
   const [googleBusy, setGoogleBusy] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
@@ -102,8 +103,8 @@ function LoginForm() {
 
       <FadeIn className="relative w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center text-center">
-          <RkMark className="mb-4 size-12 rounded-xl shadow-sm" />
-          <h1 className="text-xl font-semibold tracking-tight">RK Matrimony Admin</h1>
+          <BrandMark className="mb-4 size-12 rounded-xl shadow-sm" />
+          <h1 className="text-xl font-semibold tracking-tight">Badaga Matrimony Admin</h1>
           <p className="text-muted-foreground mt-1 text-sm">
             {mode === "register"
               ? "Create a free reader account."
@@ -171,14 +172,37 @@ function LoginForm() {
 
               <div className="space-y-2">
                 <Label htmlFor="password">Password</Label>
-                <Input
-                  id="password"
-                  type="password"
-                  autoComplete={
-                    mode === "register" ? "new-password" : "current-password"
-                  }
-                  {...form.register("password")}
-                />
+                {/*
+                  A password nobody can read back is a password typed twice.
+                  It matters more here than on most forms: a good part of this
+                  readership types on a phone keyboard that is switched to a
+                  second script, and the only feedback the field gives is a row
+                  of identical dots.
+                */}
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    autoComplete={
+                      mode === "register" ? "new-password" : "current-password"
+                    }
+                    className="pr-10"
+                    {...form.register("password")}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((shown) => !shown)}
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                    aria-pressed={showPassword}
+                    className="text-muted-foreground hover:text-foreground focus-visible:ring-ring absolute top-1/2 right-1 flex size-8 -translate-y-1/2 items-center justify-center rounded-md focus-visible:ring-2 focus-visible:outline-none"
+                  >
+                    {showPassword ? (
+                      <EyeOff className="size-4" />
+                    ) : (
+                      <Eye className="size-4" />
+                    )}
+                  </button>
+                </div>
                 {form.formState.errors.password && (
                   <p className="text-destructive text-xs">
                     {form.formState.errors.password.message}

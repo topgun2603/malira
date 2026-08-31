@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// The RK Matrimony palette.
+/// The Badaga Matrimony palette.
 ///
 /// These are not new colours. Every value is the sRGB conversion of an OKLCH
 /// token in `web-admin/src/app/globals.css`, so the app and the admin panel are
@@ -29,6 +29,13 @@ abstract final class Palette {
   static const lightDestructive = Color(0xFFCD2E2A);
   static const lightBorder = Color(0xFFDAE0DC);
   static const lightSaffron = Color(0xFFDD872B);
+
+  /// The medallion's gold, taken down until it holds on paper.
+  ///
+  /// The ring itself is around #D0A058, which is only 2.1:1 on the cream
+  /// surface — fine as a ring, unreadable as a word. This is the same hue
+  /// carried to 4.5:1 so the wordmark passes at any size.
+  static const lightGold = Color(0xFF9A6B1E);
   static const lightMist = Color(0xFF8EAAB7);
   // The navy rail — `--sidebar` in globals.css, where it backs the admin
   // drawer. Here it backs the app drawer and the launcher tile, and it plays
@@ -40,11 +47,11 @@ abstract final class Palette {
   static const lightRail = Color(0xFF13253F);
   static const lightRailForeground = Color(0xFFDEE9F5);
 
-  /// The RK Matrimony brand ground, and the deeper rose it ramps out of.
+  /// The Badaga Matrimony brand ground, and the deeper rose it ramps out of.
   ///
   /// The launcher tile and the painted mark are drawn on this gradient. It is
   /// the matrimony rose rather than the tea green the app used to wear: the
-  /// product is called RK Matrimony and opens on matrimony, so the mark a reader
+  /// product is called Badaga Matrimony and opens on matrimony, so the mark a reader
   /// taps should be the colour of the place it opens.
   static const lightBrandDeep = Color(0xFF5E1E3B);
   static const lightBrand = lightMatrimony;
@@ -95,6 +102,10 @@ abstract final class Palette {
   static const darkDestructive = Color(0xFFF96467);
   static const darkBorder = Color(0xFF2A332F);
   static const darkSaffron = Color(0xFFEE9C46);
+
+  /// The medallion's gold at its highlight, which is where it belongs on a
+  /// dark ground: 10:1 against the night sky the gate is painted on.
+  static const darkGold = Color(0xFFE8C36A);
   static const darkMist = Color(0xFF7C97A4);
   static const darkRail = Color(0xFF0F2438);
   static const darkRailForeground = Color(0xFFDEE9F5);
@@ -124,6 +135,7 @@ abstract final class Palette {
 class BrandColors extends ThemeExtension<BrandColors> {
   const BrandColors({
     required this.saffron,
+    required this.gold,
     required this.mist,
     required this.rail,
     required this.railForeground,
@@ -139,6 +151,14 @@ class BrandColors extends ThemeExtension<BrandColors> {
   });
 
   final Color saffron;
+
+  /// The wordmark gold, and only the wordmark.
+  ///
+  /// Distinct from [saffron]: the saffron is the loud colour reserved for
+  /// actions, and a name is not an action. Lifting the name in the same
+  /// colour as the buttons would leave the reader with two things shouting
+  /// and no way to tell which one is meant to be tapped.
+  final Color gold;
   final Color mist;
   final Color rail;
   final Color railForeground;
@@ -163,6 +183,7 @@ class BrandColors extends ThemeExtension<BrandColors> {
 
   static const light = BrandColors(
     saffron: Palette.lightSaffron,
+    gold: Palette.lightGold,
     mist: Palette.lightMist,
     rail: Palette.lightRail,
     railForeground: Palette.lightRailForeground,
@@ -179,6 +200,7 @@ class BrandColors extends ThemeExtension<BrandColors> {
 
   static const dark = BrandColors(
     saffron: Palette.darkSaffron,
+    gold: Palette.darkGold,
     mist: Palette.darkMist,
     rail: Palette.darkRail,
     railForeground: Palette.darkRailForeground,
@@ -196,6 +218,7 @@ class BrandColors extends ThemeExtension<BrandColors> {
   @override
   BrandColors copyWith({
     Color? saffron,
+    Color? gold,
     Color? mist,
     Color? rail,
     Color? railForeground,
@@ -211,6 +234,7 @@ class BrandColors extends ThemeExtension<BrandColors> {
   }) {
     return BrandColors(
       saffron: saffron ?? this.saffron,
+      gold: gold ?? this.gold,
       mist: mist ?? this.mist,
       rail: rail ?? this.rail,
       railForeground: railForeground ?? this.railForeground,
@@ -231,6 +255,7 @@ class BrandColors extends ThemeExtension<BrandColors> {
     if (other == null) return this;
     return BrandColors(
       saffron: Color.lerp(saffron, other.saffron, t)!,
+      gold: Color.lerp(gold, other.gold, t)!,
       mist: Color.lerp(mist, other.mist, t)!,
       rail: Color.lerp(rail, other.rail, t)!,
       railForeground: Color.lerp(railForeground, other.railForeground, t)!,

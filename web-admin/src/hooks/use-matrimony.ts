@@ -21,6 +21,7 @@ import {
   saveProfile,
   sendInterest,
   setOwnStatus,
+  resumeOwnListing,
   withdrawInterest,
   type MatrimonyFilters,
   type ModerationFilters,
@@ -82,13 +83,44 @@ export function useSaveProfile() {
   });
 }
 
+/**
+ * Resume a paused listing.
+ *
+ * Separate from [useSetOwnStatus] because resuming is the one owner action
+ * whose destination is not known at the call site: it depends on where the
+ * pause began, and the toast has to say which of the two happened so nobody is
+ * left waiting for a review that is not coming.
+ */
+export function useResumeOwnListing() {
+  const queryClient = useQueryClient();
+  const { firebaseUser } = useAuth();
+  return useMutation({
+    mutationFn: (pausedFrom: MatrimonyStatus | null) =>
+      resumeOwnListing(firebaseUser?.uid ?? "", pausedFrom),
+    onSuccess: (status) => {
+      toast.success(
+        status === "approved"
+          ? "Listing is live again."
+          : "Listing resumed and sent for review.",
+      );
+      queryClient.invalidateQueries({ queryKey: ["matrimony"] });
+    },
+    onError: (error) => toast.error(friendlyError(error)),
+  });
+}
+
 export function useSetOwnStatus() {
   const queryClient = useQueryClient();
   const { firebaseUser } = useAuth();
   return useMutation({
-    mutationFn: (status: "paused" | "married" | "pending") =>
-      setOwnStatus(firebaseUser?.uid ?? "", status),
-    onSuccess: (_, status) => {
+    mutationFn: ({
+      status,
+      current,
+    }: {
+      status: "paused" | "married" | "pending";
+      current?: MatrimonyStatus;
+    }) => setOwnStatus(firebaseUser?.uid ?? "", status, current),
+    onSuccess: (_, { status }) => {
       toast.success(
         status === "married"
           ? "Profile removed from search. Congratulations."

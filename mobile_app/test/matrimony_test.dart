@@ -313,6 +313,8 @@ MatrimonyProfile _height(int cm) => MatrimonyProfile(
   photos: const [],
   hasPhotos: false,
   status: MatrimonyStatus.approved,
+  // Not paused: this helper exists to exercise the height filter.
+  pausedFrom: null,
   reviewNote: null,
   createdAt: null,
   updatedAt: null,

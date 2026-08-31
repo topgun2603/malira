@@ -377,6 +377,10 @@ class MatrimonyRepository {
       // a viewer can be told they exist without being shown them.
       'hasPhotos': draft.photos.isNotEmpty,
       'status': MatrimonyStatus.pending.id,
+      // An edit clears any pause it was carrying: the profile a moderator
+      // approved is not the profile now on the document, so there is nothing
+      // left to resume straight back into.
+      'pausedFrom': null,
       'reviewNote': null,
       'updatedAt': FieldValue.serverTimestamp(),
       'createdAt': FieldValue.serverTimestamp(),
@@ -398,8 +402,17 @@ class MatrimonyRepository {
 
   /// Pause a listing, mark the marriage fixed, or put it back in the queue.
   ///
-  /// The rules permit only these three from an owner — never `approved`.
-  Future<void> setOwnStatus(String uid, MatrimonyStatus status) async {
+  /// The rules permit only these three from an owner — never `approved`, which
+  /// is [resumeOwnListing]'s job and only out of a pause.
+  ///
+  /// [current] is required when pausing: the rules check that the recorded
+  /// origin is the status actually being left, so a pending listing cannot
+  /// pause as though it had been approved and resume past the queue.
+  Future<void> setOwnStatus(
+    String uid,
+    MatrimonyStatus status, {
+    MatrimonyStatus? current,
+  }) async {
     assert(
       status == MatrimonyStatus.paused ||
           status == MatrimonyStatus.married ||
@@ -408,8 +421,33 @@ class MatrimonyRepository {
     );
     await _refs.matrimonyProfile(uid).update({
       'status': status.id,
+      if (status == MatrimonyStatus.paused) 'pausedFrom': current?.id,
       'updatedAt': FieldValue.serverTimestamp(),
     });
+  }
+
+  /// Put a paused listing back, and report where it landed.
+  ///
+  /// A listing that was approved when it was paused returns to approved rather
+  /// than to the back of the queue: nothing about it changed while it was
+  /// hidden, so there is nothing for a moderator to read a second time. One
+  /// that was still pending resumes as pending, where it already was.
+  ///
+  /// Exactly three keys move, because the rules allow the return to approved
+  /// only when nothing else on the profile moves with it.
+  Future<MatrimonyStatus> resumeOwnListing(
+    String uid,
+    MatrimonyStatus? pausedFrom,
+  ) async {
+    final status = pausedFrom == MatrimonyStatus.approved
+        ? MatrimonyStatus.approved
+        : MatrimonyStatus.pending;
+    await _refs.matrimonyProfile(uid).update({
+      'status': status.id,
+      'pausedFrom': null,
+      'updatedAt': FieldValue.serverTimestamp(),
+    });
+    return status;
   }
 
   Future<void> deleteProfile(String uid) async {

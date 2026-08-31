@@ -155,6 +155,7 @@ class MatrimonyProfile {
     required this.photos,
     required this.hasPhotos,
     required this.status,
+    required this.pausedFrom,
     required this.reviewNote,
     required this.createdAt,
     required this.updatedAt,
@@ -193,6 +194,10 @@ class MatrimonyProfile {
           .toList(growable: false),
       hasPhotos: data.flag('hasPhotos'),
       status: MatrimonyStatus.fromId(data.str('status')),
+      pausedFrom: switch (data.strOrNull('pausedFrom')) {
+        final String id => MatrimonyStatus.fromId(id),
+        null => null,
+      },
       reviewNote: data.strOrNull('reviewNote'),
       createdAt: data.time('createdAt'),
       updatedAt: data.time('updatedAt'),
@@ -233,6 +238,13 @@ class MatrimonyProfile {
   final bool hasPhotos;
 
   final MatrimonyStatus status;
+
+  /// The status a pause was taken from, and null whenever this is not paused.
+  ///
+  /// Kept so resuming can tell a listing that had already cleared review from
+  /// one that never had. The rules constrain it: it may only ever name the
+  /// status actually being left.
+  final MatrimonyStatus? pausedFrom;
   final String? reviewNote;
   final DateTime? createdAt;
   final DateTime? updatedAt;
