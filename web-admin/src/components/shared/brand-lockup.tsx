@@ -36,7 +36,7 @@ export function BrandLockup({
 
   return (
     <>
-      <div className={cn("flex items-center", large ? "gap-3.5" : "gap-2.5", className)}>
+      <div className={cn("flex items-center", large ? "gap-4" : "gap-3", className)}>
         {/* The medallion is detailed artwork — the ring carries the name and
             the monogram sits inside it — and none of that survives at 36px.
             Clicking it opens the full thing rather than leaving people to
@@ -48,14 +48,14 @@ export function BrandLockup({
           aria-label={lang === "ta" ? "சின்னத்தைப் பெரிதாக்கு" : "View the logo"}
           className="focus-visible:ring-ring cursor-zoom-in rounded-full transition-transform hover:scale-[1.04] focus-visible:ring-2 focus-visible:outline-none"
         >
-          <BrandMark className={large ? "size-14" : "size-9"} />
+          <BrandMark className={large ? "size-20" : "size-12"} />
         </button>
 
         <Link href="/" className="leading-none">
           <span
             className={cn(
               "text-brand-gold block font-bold tracking-wide",
-              large ? "text-2xl" : "text-lg",
+              large ? "text-3xl" : "text-xl",
               lang === "ta" && "font-tamil",
             )}
           >
@@ -64,7 +64,7 @@ export function BrandLockup({
           <span
             className={cn(
               "block font-semibold tracking-[0.2em]",
-              large ? "text-[0.82rem]" : "text-[0.68rem]",
+              large ? "text-[0.95rem]" : "text-[0.78rem]",
               lang === "ta" && "font-tamil tracking-[0.12em]",
             )}
           >

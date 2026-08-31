@@ -35,7 +35,9 @@ export function SiteHeader() {
 
   return (
     <header className="bg-background/85 sticky top-0 z-40 border-b backdrop-blur">
-      <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-4 sm:px-6">
+      {/* Taller than the usual 16 because the mark is 48px now: at h-16 it
+          sat with 8px of air top and bottom and read as crammed. */}
+      <div className="mx-auto flex h-20 w-full max-w-6xl items-center gap-3 px-4 sm:px-6">
         <BrandLockup lang={lang} />
 
         <nav className="scrollbar-none ml-6 hidden items-center gap-1 overflow-x-auto md:flex">
