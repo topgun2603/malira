@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "@/components/providers/theme-provider";
 import { Moon, Sun } from "lucide-react";
-import { BrandMark } from "@/components/shared/brand-mark";
+import { BrandLockup } from "@/components/shared/brand-lockup";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useLanguage } from "./language";
@@ -36,17 +36,7 @@ export function SiteHeader() {
   return (
     <header className="bg-background/85 sticky top-0 z-40 border-b backdrop-blur">
       <div className="mx-auto flex h-16 w-full max-w-6xl items-center gap-3 px-4 sm:px-6">
-        <Link href="/" className="flex items-center gap-2.5">
-          <BrandMark />
-          <span className="leading-tight">
-            <span className="block text-base font-semibold tracking-tight">
-              Badaga Matrimony
-            </span>
-            <span className="text-muted-foreground block text-xs">
-              {lang === "ta" ? "மலைகளில் வேரூன்றிய அன்பு" : "Love, Rooted in the Hills"}
-            </span>
-          </span>
-        </Link>
+        <BrandLockup lang={lang} />
 
         <nav className="scrollbar-none ml-6 hidden items-center gap-1 overflow-x-auto md:flex">
           {NAV.map((item) => (

@@ -57,6 +57,7 @@
 
   /* Saffron-terracotta — the one "loud" colour, used sparingly */
   --color-brand-saffron: var(--brand-saffron);
+  --color-brand-gold: var(--brand-gold);
   --color-brand-mist: var(--brand-mist);
 
   --radius-sm: calc(var(--radius) * 0.6);
@@ -101,6 +102,8 @@
   --ring: oklch(0.44 0.086 158);
 
   --brand-saffron: oklch(0.7 0.145 62);
+  /* The medallion gold, taken down until it holds on the cream. */
+  --brand-gold: oklch(0.564 0.107 75);
   --brand-mist: oklch(0.72 0.036 228);
 
   --status-draft: oklch(0.6 0.014 170);
@@ -157,6 +160,8 @@
   --ring: oklch(0.62 0.09 158);
 
   --brand-saffron: oklch(0.76 0.14 64);
+  /* The same gold at its highlight, which is where it belongs on ink. */
+  --brand-gold: oklch(0.831 0.116 87);
   --brand-mist: oklch(0.66 0.036 228);
 
   --status-draft: oklch(0.66 0.014 170);

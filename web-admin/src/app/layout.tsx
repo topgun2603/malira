@@ -33,7 +33,8 @@ export const metadata: Metadata = {
     default: "Badaga Matrimony",
     template: "%s · Badaga Matrimony",
   },
-  description: "Badaga Matrimony — Love, Rooted in the Hills.",
+  description:
+    "Matrimony profiles from Badaga families across the Nilgiris, each one reviewed before it appears.",
 };
 
 export const viewport: Viewport = {

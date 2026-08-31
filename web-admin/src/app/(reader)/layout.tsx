@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
-import { BrandMark } from "@/components/shared/brand-mark";
+import { BrandLockup } from "@/components/shared/brand-lockup";
 import { LanguageProvider, useLanguage } from "@/components/reader/language";
 import { SiteHeader } from "@/components/reader/site-header";
 import { PopupAd } from "@/components/reader/ad-slot";
@@ -16,10 +16,7 @@ function SiteFooter() {
       <div className="mx-auto w-full max-w-6xl px-4 py-10 sm:px-6">
         <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
           <div className="max-w-sm space-y-2">
-            <span className="flex items-center gap-2 font-semibold">
-              <BrandMark className="size-4 rounded" />
-              Badaga Matrimony
-            </span>
+            <BrandLockup lang={lang} size="lg" />
             <p className="text-muted-foreground text-sm leading-relaxed">
               {lang === "ta"
                 ? "நீலகிரி மாவட்டத்தின் திருமணத் தகவல், செய்திகள் மற்றும் நிகழ்வுகள்."
