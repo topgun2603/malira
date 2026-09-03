@@ -21,6 +21,12 @@ abstract final class Collections {
   static const matrimonyInterests = 'matrimonyInterests';
   static const matrimonyReports = 'matrimonyReports';
   static const subscriptions = 'subscriptions';
+
+  static const vendors = 'vendors';
+  static const plans = 'plans';
+  static const paymentRequests = 'paymentRequests';
+  static const paymentUtrs = 'paymentUtrs';
+  static const userNotices = 'userNotices';
 }
 
 typedef Doc = DocumentSnapshot<Map<String, dynamic>>;
@@ -103,6 +109,40 @@ class Refs {
   /// one's read rule also admits a subscriber whose plan carried the override.
   DocumentReference<Map<String, dynamic>> matrimonyPhotos(String uid) =>
       matrimonyProfile(uid).collection('private').doc('photos');
+
+  /// The wedding services directory. Public: approved listings are readable
+  /// without signing in, because a hall that only members could find would be
+  /// worth little to the business paying for it.
+  CollectionReference<Map<String, dynamic>> get vendors =>
+      _db.collection(Collections.vendors);
+
+  DocumentReference<Map<String, dynamic>> vendor(String id) =>
+      vendors.doc(id);
+
+  /// Plans, for both halves of the product. `kind` says which.
+  CollectionReference<Map<String, dynamic>> get plans =>
+      _db.collection(Collections.plans);
+
+  /// Claims that money was sent, waiting on a person.
+  CollectionReference<Map<String, dynamic>> get paymentRequests =>
+      _db.collection(Collections.paymentRequests);
+
+  /// A UTR's uniqueness, expressed as a document that can only be created once.
+  ///
+  /// The rules grant `create` and deny `update`, so a second claim on the same
+  /// bank reference is a create against a document that exists and Firestore
+  /// refuses it. That is the duplicate check — not a query, which would lose
+  /// the race between two people submitting the same number at once.
+  DocumentReference<Map<String, dynamic>> paymentUtr(String key) =>
+      _db.collection(Collections.paymentUtrs).doc(key);
+
+  /// Addressed to one account, unlike `notifications` which is a broadcast.
+  CollectionReference<Map<String, dynamic>> userNotices(String uid) =>
+      _db.collection(Collections.userNotices).doc(uid).collection('items');
+
+  /// `settings/payments` — where to pay. Readable by anyone signed in.
+  DocumentReference<Map<String, dynamic>> get paymentSettings =>
+      _db.collection(Collections.settings).doc('payments');
 
   /// `settings/matrimony` — the free allowance, edited in the admin.
   DocumentReference<Map<String, dynamic>> get matrimonySettings =>
