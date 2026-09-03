@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { PlanCards } from "@/components/matrimony/plan-cards";
+import { MyPayments } from "@/components/payments/my-payments";
 import { useLanguage } from "@/components/reader/language";
 import { useAuth } from "@/components/providers/auth-provider";
 import { useEntitlement } from "@/hooks/use-subscription";
@@ -89,6 +90,12 @@ export default function SubscriptionPage() {
       <div className="mt-10">
         <PlanCards interactive={Boolean(firebaseUser)} onSignInHref="/matrimony" />
       </div>
+
+      {firebaseUser && (
+        <div className="mt-10">
+          <MyPayments />
+        </div>
+      )}
 
       {/* The three questions people actually have about paying on a matrimony
           site, answered before they are asked. */}

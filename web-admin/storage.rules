@@ -44,6 +44,21 @@ service firebase.storage {
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
+    // Directory photographs.
+    //
+    // World-readable, unlike everything else here, because the directory itself
+    // is: a family looking for a hall has not signed in, and a photograph they
+    // cannot load is a listing the vendor paid for and nobody can see. Written
+    // only into the owner's own folder.
+    match /vendors/{uid}/{fileName} {
+      allow read: if true;
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 3 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      allow delete: if request.auth != null && request.auth.uid == uid;
+    }
+
     // Payment proof: a screenshot of somebody's banking app.
     //
     // Write-only from the payer's side, and never world-readable. A payment

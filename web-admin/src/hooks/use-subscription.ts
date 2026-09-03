@@ -1,17 +1,14 @@
 "use client";
 
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { toast } from "sonner";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/components/providers/auth-provider";
 import {
   getSubscription,
   isPremium,
   remainingInterests,
-  startPlanCheckout,
 } from "@/lib/api/subscriptions";
 import { useActivePlans, useMatrimonyLimits } from "@/hooks/use-plans";
 import { useSentInterests } from "@/hooks/use-matrimony";
-import { friendlyError } from "@/lib/firebase/errors";
 import { DEFAULT_MATRIMONY_LIMITS } from "@/lib/types";
 
 export const subscriptionKeys = {
@@ -53,24 +50,4 @@ export function useEntitlement() {
     freeInterests,
     remaining: remainingInterests(sent ?? [], premium),
   };
-}
-
-export function useStartCheckout() {
-  const queryClient = useQueryClient();
-  const { profile } = useAuth();
-
-  return useMutation({
-    mutationFn: (planId: string) =>
-      startPlanCheckout(planId, profile?.displayName ?? ""),
-    onSuccess: () => {
-      toast.success("Payment received. Premium is active.");
-      queryClient.invalidateQueries({ queryKey: ["subscription"] });
-    },
-    onError: (error) => {
-      const message = friendlyError(error);
-      // A dismissed modal is a choice, not a failure.
-      if (message.toLowerCase().includes("cancelled")) return;
-      toast.error(message);
-    },
-  });
 }

@@ -15,6 +15,7 @@ import { AccountMenu } from "./account-menu";
 // is not the landing page only teaches people that the nav is wrong.
 const NAV = [
   { href: "/matrimony", en: "Matrimony", ta: "திருமணம்" },
+  { href: "/services", en: "Services", ta: "சேவைகள்" },
   { href: "/news", en: "News", ta: "செய்திகள்" },
   { href: "/events", en: "Events", ta: "நிகழ்வுகள்" },
   { href: "/songs", en: "Songs", ta: "பாடல்கள்" },

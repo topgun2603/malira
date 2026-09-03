@@ -177,6 +177,78 @@ export async function deleteArticleImage(image: ArticleImage): Promise<void> {
  * therefore that restricted photo URLs live in the private Firestore
  * subcollection and are never sent to a browser that has not earned them.
  */
+/**
+ * A screenshot of somebody's banking app, as proof a transfer happened.
+ *
+ * Compressed like everything else, but the ceiling matters more here than the
+ * bytes: the desk has to read a UTR off it. Anything that made the digits
+ * unreadable would defeat the only purpose the image has.
+ */
+export async function uploadPaymentProof(
+  file: File,
+  uid: string,
+  onProgress?: (percent: number) => void,
+): Promise<ArticleImage> {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Only image files can be uploaded.");
+  }
+
+  const compressed = await compressForUpload(file);
+  const { width, height } = await readDimensions(compressed);
+
+  const name = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+  const path = `payments/${uid}/${name}`;
+  const storageRef = ref(storage, path);
+
+  await uploadWithRetry(
+    storageRef,
+    compressed,
+    {
+      contentType: compressed.type || "image/jpeg",
+      cacheControl: PRIVATE_CACHE,
+    },
+    onProgress,
+  );
+
+  return { url: await getDownloadURL(storageRef), path, width, height, caption: "" };
+}
+
+/**
+ * A photograph of a hall, a spread, a stage.
+ *
+ * Kept apart from the matrimony path because the two have opposite audiences:
+ * a matrimony photograph is withheld until it is earned, and a directory
+ * photograph exists to be seen by somebody who has never signed in.
+ */
+export async function uploadVendorPhoto(
+  file: File,
+  uid: string,
+  onProgress?: (percent: number) => void,
+): Promise<ArticleImage> {
+  if (!file.type.startsWith("image/")) {
+    throw new Error("Only image files can be uploaded.");
+  }
+
+  const compressed = await compressForUpload(file);
+  const { width, height } = await readDimensions(compressed);
+
+  const name = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+  const path = `vendors/${uid}/${name}`;
+  const storageRef = ref(storage, path);
+
+  await uploadWithRetry(
+    storageRef,
+    compressed,
+    {
+      contentType: compressed.type || "image/jpeg",
+      cacheControl: ARTICLE_CACHE,
+    },
+    onProgress,
+  );
+
+  return { url: await getDownloadURL(storageRef), path, width, height, caption: "" };
+}
+
 export async function uploadMatrimonyPhoto(
   file: File,
   uid: string,

@@ -1,13 +1,16 @@
 "use client";
 
-import { Check, Crown, Loader2 } from "lucide-react";
+import { useState } from "react";
+import { Check, Crown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/components/reader/language";
 import { useActivePlans } from "@/hooks/use-plans";
-import { useEntitlement, useStartCheckout } from "@/hooks/use-subscription";
+import { useEntitlement } from "@/hooks/use-subscription";
+import { PayDialog } from "@/components/payments/pay-dialog";
 import { cn } from "@/lib/utils";
+import type { SubscriptionPlan } from "@/lib/types";
 import { PriceTag, rupees } from "@/components/matrimony/price-tag";
 
 /**
@@ -27,7 +30,7 @@ export function PlanCards({
   const { lang } = useLanguage();
   const { data: plans, isLoading } = useActivePlans();
   const { premium, subscription } = useEntitlement();
-  const checkout = useStartCheckout();
+  const [paying, setPaying] = useState<SubscriptionPlan | null>(null);
 
   if (isLoading) {
     return (
@@ -99,12 +102,7 @@ export function PlanCards({
                     {lang === "ta" ? "தற்போதைய திட்டம்" : "Your current plan"}
                   </Button>
                 ) : (
-                  <Button
-                    className="w-full"
-                    onClick={() => checkout.mutate(plan.id)}
-                    disabled={checkout.isPending}
-                  >
-                    {checkout.isPending && <Loader2 className="size-4 animate-spin" />}
+                  <Button className="w-full" onClick={() => setPaying(plan)}>
                     {premium
                       ? lang === "ta"
                         ? "நீட்டி"
@@ -119,6 +117,13 @@ export function PlanCards({
           </Card>
         );
       })}
+
+      <PayDialog
+        open={Boolean(paying)}
+        onOpenChange={(open) => !open && setPaying(null)}
+        plan={paying}
+        purpose="matrimony"
+      />
     </div>
   );
 }

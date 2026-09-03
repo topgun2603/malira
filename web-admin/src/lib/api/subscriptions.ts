@@ -1,5 +1,5 @@
 import { doc, getDoc } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase/config";
+import { db } from "@/lib/firebase/config";
 import type { Subscription } from "@/lib/types";
 import type { MatrimonyInterest } from "@/lib/types";
 
@@ -72,126 +72,19 @@ export function remainingInterests(
 /*  Checkout                                                                   */
 /* -------------------------------------------------------------------------- */
 
-interface RazorpayCheckout {
-  open: () => void;
-}
-
-declare global {
-  interface Window {
-    Razorpay?: new (options: Record<string, unknown>) => RazorpayCheckout;
-  }
-}
-
-const CHECKOUT_SRC = "https://checkout.razorpay.com/v1/checkout.js";
-
-function loadCheckout(): Promise<boolean> {
-  if (typeof window === "undefined") return Promise.resolve(false);
-  if (window.Razorpay) return Promise.resolve(true);
-
-  return new Promise((resolve) => {
-    const existing = document.querySelector<HTMLScriptElement>(
-      `script[src="${CHECKOUT_SRC}"]`,
-    );
-    if (existing) {
-      existing.addEventListener("load", () => resolve(true));
-      existing.addEventListener("error", () => resolve(false));
-      return;
-    }
-    const script = document.createElement("script");
-    script.src = CHECKOUT_SRC;
-    script.async = true;
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-}
-
-async function authHeader(): Promise<Record<string, string>> {
-  const token = await auth.currentUser?.getIdToken();
-  if (!token) throw new Error("Sign in first.");
-  return { Authorization: `Bearer ${token}`, "Content-Type": "application/json" };
-}
-
-/**
- * Runs the whole checkout.
+/*
+ * There is no gateway any more.
  *
- * Resolves only once the server has verified the signature — a Razorpay
- * success handler on its own proves nothing, because it runs in the customer's
- * browser where anything can be faked.
+ * The Razorpay checkout that used to live here loaded a third-party script,
+ * opened a hosted modal and resolved once the server had verified a signature.
+ * It has been removed rather than left dormant: it was the one place in the
+ * product that pulled executable code from another origin into a page where
+ * somebody was about to type money, and code that nothing calls is code nobody
+ * checks.
+ *
+ * Money is now taken by UPI straight into the association's account and
+ * verified by a person against the statement — see `lib/api/payments.ts` and
+ * `app/api/payments/review`. The server routes under `app/api/payments/order`
+ * and `/verify` are kept for the day a gateway is wanted again; they do nothing
+ * without Razorpay credentials in the environment.
  */
-export async function startPlanCheckout(
-  planId: string,
-  profileName: string,
-): Promise<void> {
-  const ready = await loadCheckout();
-  if (!ready) throw new Error("Could not reach the payment provider.");
-
-  const headers = await authHeader();
-
-  const orderResponse = await fetch("/api/payments/order", {
-    method: "POST",
-    headers,
-    body: JSON.stringify({ planId }),
-  });
-
-  if (!orderResponse.ok) {
-    const { error } = (await orderResponse.json().catch(() => ({}))) as {
-      error?: string;
-    };
-    throw new Error(error ?? "Could not start the payment.");
-  }
-
-  const order = (await orderResponse.json()) as {
-    orderId: string;
-    amount: number;
-    currency: string;
-    keyId: string;
-    planName: string;
-  };
-
-  await new Promise<void>((resolve, reject) => {
-    const checkout = new window.Razorpay!({
-      key: order.keyId,
-      amount: order.amount,
-      currency: order.currency,
-      order_id: order.orderId,
-      name: "Badaga Matrimony",
-      description: `Matrimony — ${order.planName}`,
-      prefill: { name: profileName },
-      // Matrimony rose: checkout only ever opens inside that section.
-      theme: { color: "#9c3464" },
-      modal: {
-        ondismiss: () => reject(new Error("Payment cancelled.")),
-      },
-      handler: async (response: {
-        razorpay_order_id: string;
-        razorpay_payment_id: string;
-        razorpay_signature: string;
-      }) => {
-        try {
-          const verify = await fetch("/api/payments/verify", {
-            method: "POST",
-            headers,
-            body: JSON.stringify({
-              orderId: response.razorpay_order_id,
-              paymentId: response.razorpay_payment_id,
-              signature: response.razorpay_signature,
-            }),
-          });
-          if (!verify.ok) {
-            const { error } = (await verify.json().catch(() => ({}))) as {
-              error?: string;
-            };
-            reject(new Error(error ?? "Payment could not be verified."));
-            return;
-          }
-          resolve();
-        } catch {
-          reject(new Error("Payment could not be verified."));
-        }
-      },
-    });
-
-    checkout.open();
-  });
-}

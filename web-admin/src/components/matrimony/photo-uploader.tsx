@@ -6,7 +6,11 @@ import { ImagePlus, Loader2, Star, X } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { deleteArticleImage, uploadMatrimonyPhoto } from "@/lib/api/storage";
+import {
+  deleteArticleImage,
+  uploadMatrimonyPhoto,
+  uploadVendorPhoto,
+} from "@/lib/api/storage";
 import { friendlyError } from "@/lib/firebase/errors";
 import type { ArticleImage } from "@/lib/types";
 import { cn } from "@/lib/utils";
@@ -25,11 +29,22 @@ export function MatrimonyPhotos({
   value,
   onChange,
   disabled,
+  destination = "matrimony",
 }: {
   uid: string;
   value: ArticleImage[];
   onChange: (photos: ArticleImage[]) => void;
   disabled?: boolean;
+  /**
+   * Which bucket path the files land in.
+   *
+   * Not cosmetic: the matrimony path is readable only by signed-in accounts and
+   * the vendor path is readable by anyone, because a directory photograph has
+   * to load for a family who has never signed in. Uploading a hall into the
+   * matrimony path would produce a listing whose pictures are invisible to the
+   * people it was paid for.
+   */
+  destination?: "matrimony" | "vendor";
 }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [progress, setProgress] = useState<number | null>(null);
@@ -48,7 +63,11 @@ export function MatrimonyPhotos({
     for (const file of list) {
       try {
         setProgress(0);
-        uploaded.push(await uploadMatrimonyPhoto(file, uid, setProgress));
+        uploaded.push(
+          destination === "vendor"
+            ? await uploadVendorPhoto(file, uid, setProgress)
+            : await uploadMatrimonyPhoto(file, uid, setProgress),
+        );
       } catch (error) {
         toast.error(friendlyError(error));
       }

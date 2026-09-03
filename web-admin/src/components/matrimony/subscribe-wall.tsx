@@ -1,10 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { Check, Crown, Loader2, Lock } from "lucide-react";
+import { useState } from "react";
+import { Check, Crown, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useLanguage } from "@/components/reader/language";
-import { useEntitlement, useStartCheckout } from "@/hooks/use-subscription";
+import { useEntitlement } from "@/hooks/use-subscription";
+import { PayDialog } from "@/components/payments/pay-dialog";
 import { PriceTag, rupees } from "@/components/matrimony/price-tag";
 
 /**
@@ -24,7 +26,7 @@ import { PriceTag, rupees } from "@/components/matrimony/price-tag";
 export function SubscribeWall({ hidden }: { hidden: number }) {
   const { lang } = useLanguage();
   const { plans } = useEntitlement();
-  const checkout = useStartCheckout();
+  const [paying, setPaying] = useState(false);
 
   // Push the highlighted plan, or the cheapest if none is marked.
   const plan =
@@ -70,19 +72,17 @@ export function SubscribeWall({ hidden }: { hidden: number }) {
 
           <PriceTag plan={plan} className="mt-6 justify-center" />
 
-          <Button
-            size="lg"
-            className="mt-5"
-            onClick={() => checkout.mutate(plan.id)}
-            disabled={checkout.isPending}
-          >
-            {checkout.isPending ? (
-              <Loader2 className="size-4 animate-spin" />
-            ) : (
-              <Crown className="size-4" />
-            )}
+          <Button size="lg" className="mt-5" onClick={() => setPaying(true)}>
+            <Crown className="size-4" />
             {plan.name} — {rupees(plan.priceInPaise)}
           </Button>
+
+          <PayDialog
+            open={paying}
+            onOpenChange={setPaying}
+            plan={plan}
+            purpose="matrimony"
+          />
 
           {plans.length > 1 && (
             <p className="mt-3">
