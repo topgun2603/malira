@@ -12,3 +12,7 @@ GeneratedPluginRegistrant.java
 key.properties
 **/*.keystore
 **/*.jks
+
+# Kotlin daemon scratch. Regenerated every build, and the incremental
+# caches inside it are exactly what corrupts when a build is interrupted.
+.kotlin/
