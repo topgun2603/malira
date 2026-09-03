@@ -34,6 +34,13 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { PageHeader } from "@/components/layout/page-header";
 import { PaginationBar } from "@/components/shared/pagination-bar";
 import { EmptyState, TableSkeleton } from "@/components/shared/states";
@@ -48,11 +55,17 @@ import {
   useUpdatePlan,
 } from "@/hooks/use-plans";
 import type { PlanDraft } from "@/lib/api/plans";
-import { DEFAULT_MATRIMONY_LIMITS, type SubscriptionPlan } from "@/lib/types";
+import {
+  DEFAULT_MATRIMONY_LIMITS,
+  PLAN_KINDS,
+  PLAN_KIND_LABELS,
+  type SubscriptionPlan,
+} from "@/lib/types";
 import Link from "next/link";
 import { PriceTag } from "@/components/matrimony/price-tag";
 
 const EMPTY: PlanDraft = {
+  kind: "matrimony",
   name: "",
   nameTa: "",
   priceInPaise: 49900,
@@ -99,6 +112,7 @@ export default function PlansPage() {
   function startEdit(plan: SubscriptionPlan) {
     setEditing(plan);
     setDraft({
+      kind: plan.kind,
       name: plan.name,
       nameTa: plan.nameTa,
       priceInPaise: plan.priceInPaise,
@@ -475,6 +489,31 @@ export default function PlansPage() {
               <p className="text-muted-foreground text-xs">
                 The contact-on-mutual-accept line is added automatically, and is
                 the same on every plan.
+              </p>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="kind">What this plan sells</Label>
+              <Select
+                value={draft.kind}
+                onValueChange={(v) =>
+                  setDraft({ ...draft, kind: v as PlanDraft["kind"] })
+                }
+              >
+                <SelectTrigger id="kind" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PLAN_KINDS.map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {PLAN_KIND_LABELS[value]}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-muted-foreground text-xs">
+                A vendor plan buys one directory listing its term of time. It
+                never buys approval &mdash; a listing still goes through review.
               </p>
             </div>
 

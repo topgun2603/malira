@@ -44,6 +44,24 @@ service firebase.storage {
       allow delete: if request.auth != null && request.auth.uid == uid;
     }
 
+    // Payment proof: a screenshot of somebody's banking app.
+    //
+    // Write-only from the payer's side, and never world-readable. A payment
+    // screenshot carries a name, a balance and an account fragment, so it is
+    // not the sort of image that should be guessable by URL the way an article
+    // photograph is. Only the desk reading it back has any business with it,
+    // and that read is gated by the same sign-in the admin panel requires.
+    match /payments/{uid}/{fileName} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null
+        && request.auth.uid == uid
+        && request.resource.size < 3 * 1024 * 1024
+        && request.resource.contentType.matches('image/.*');
+      // Never deleted by the payer: the proof is the audit trail for money that
+      // has already been granted against it.
+      allow delete: if false;
+    }
+
     match /{allPaths=**} {
       allow read, write: if false;
     }

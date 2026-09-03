@@ -31,6 +31,9 @@ const SETTINGS_DOC = () => doc(db, "settings", "matrimony");
 function toPlan(id: string, data: Record<string, unknown>): SubscriptionPlan {
   return {
     id,
+    // Plans written before vendors existed are matrimony plans. Defaulting
+    // rather than migrating keeps the old documents valid.
+    kind: (data.kind as SubscriptionPlan["kind"]) ?? "matrimony",
     name: (data.name as string) ?? "",
     nameTa: (data.nameTa as string) ?? "",
     priceInPaise: (data.priceInPaise as number) ?? 0,
@@ -53,15 +56,27 @@ export async function listPlans(): Promise<SubscriptionPlan[]> {
   return snapshot.docs.map((entry) => toPlan(entry.id, entry.data()));
 }
 
-/** What a reader is offered. Public: the landing page prices are marketing. */
-export async function listActivePlans(): Promise<SubscriptionPlan[]> {
+/**
+ * What a reader is offered. Public: the landing page prices are marketing.
+ *
+ * The kind is filtered here rather than in the query on purpose. Plans written
+ * before vendors existed carry no `kind` field at all, and a Firestore equality
+ * would drop them — the whole matrimony price list would vanish the moment this
+ * shipped. `toPlan` defaults them to matrimony; this filters what it returns.
+ */
+export async function listActivePlans(
+  kind: SubscriptionPlan["kind"] = "matrimony",
+): Promise<SubscriptionPlan[]> {
   const snapshot = await getDocs(
     query(collection(db, PLANS), where("active", "==", true), orderBy("order", "asc")),
   );
-  return snapshot.docs.map((entry) => toPlan(entry.id, entry.data()));
+  return snapshot.docs
+    .map((entry) => toPlan(entry.id, entry.data()))
+    .filter((plan) => plan.kind === kind);
 }
 
 export interface PlanDraft {
+  kind: SubscriptionPlan["kind"];
   name: string;
   nameTa: string;
   priceInPaise: number;
@@ -97,6 +112,7 @@ export async function seedDefaultPlan(): Promise<number> {
   const existing = await listPlans();
   if (existing.length > 0) return 0;
   await createPlan({
+    kind: "matrimony",
     name: "Premium",
     nameTa: "பிரீமியம்",
     priceInPaise: 49900,

@@ -55,6 +55,17 @@ service cloud.firestore {
       return active() && (role() == 'matrimony_moderator' || role() == 'super_admin');
     }
 
+    function isVendorModerator() {
+      return active() && (role() == 'vendor_moderator' || role() == 'super_admin');
+    }
+
+    // Money is deliberately tighter than everything else: verifying a payment
+    // grants a paid entitlement, so it sits with the account that answers for
+    // the association's bank rather than with a section moderator.
+    function verifiesPayments() {
+      return active() && role() == 'super_admin';
+    }
+
     // A matrimony profile's document id IS its owner's uid, so ownership needs
     // no lookup and one account can never hold two profiles.
     function interestAccepted(a, b) {
@@ -369,6 +380,104 @@ service cloud.firestore {
       allow read: if hasPhotoOverride();
     }
 
+    // --------------------------- wedding services ----------------------------
+    //
+    // A directory has to be findable. Matrimony is gated because a listing there
+    // is a person; a hall is a business that wants to be advertised, and one
+    // that could only be seen by signed-in members would be worth little to the
+    // vendor paying for it and nothing to a family searching the web.
+    //
+    // Two gates decide whether a listing is in the directory, and they are
+    // different facts: a moderator's approval, and paid time that has not run
+    // out. Either can lapse without the other, so both are stored and both are
+    // checked. Rules enforce the first — the second is a query filter, because
+    // an owner whose time has run out must still be able to see their own
+    // listing in order to renew it.
+    match /vendors/{vendorId} {
+      allow read: if resource.data.status == 'approved'
+        || isVendorModerator()
+        || (signedIn() && request.auth.uid == resource.data.ownerUid);
+
+      // Anyone signed in may list a business, and every listing starts in the
+      // queue. Paid time is the server's to grant: a client that could write
+      // `paidUntil` could publish itself for free.
+      allow create: if signedIn()
+        && request.resource.data.ownerUid == request.auth.uid
+        && request.resource.data.status == 'pending'
+        && request.resource.data.get('paidUntil', null) == null
+        && request.resource.data.get('featured', false) == false;
+
+      // An owner edits their own listing and may pause it, but may never
+      // approve it, extend it, or promote it. Editing returns it to the queue
+      // for the same reason a matrimony edit does: what a moderator approved is
+      // not what is on the document any more.
+      allow update: if isVendorModerator()
+        || (signedIn()
+            && request.auth.uid == resource.data.ownerUid
+            && request.resource.data.ownerUid == resource.data.ownerUid
+            && request.resource.data.status in ['pending', 'paused']
+            && request.resource.data.get('paidUntil', null)
+                 == resource.data.get('paidUntil', null)
+            && request.resource.data.get('featured', false)
+                 == resource.data.get('featured', false));
+
+      allow delete: if isVendorModerator()
+        || (signedIn() && request.auth.uid == resource.data.ownerUid);
+    }
+
+    // ------------------------------- payments --------------------------------
+    //
+    // There is no gateway. Somebody pays by UPI, types in the bank's reference,
+    // uploads the screenshot, and a person at the desk reconciles it against the
+    // statement. That approval is the only thing that grants anything, which is
+    // why a payer may write a request and never touch its verdict.
+    match /paymentRequests/{requestId} {
+      allow read: if verifiesPayments()
+        || (signedIn() && request.auth.uid == resource.data.uid);
+
+      // Submitted, never decided. Everything the desk will act on is fixed at
+      // creation; the four fields below are the verdict and belong to the desk.
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid
+        && request.resource.data.status == 'submitted'
+        && request.resource.data.get('reviewNote', null) == null
+        && request.resource.data.get('reviewedBy', null) == null
+        && request.resource.data.get('grantedUntil', null) == null
+        && request.resource.data.utr is string
+        && request.resource.data.utr.size() >= 6;
+
+      allow update, delete: if verifiesPayments();
+    }
+
+    // The uniqueness of a UTR, expressed as a document that can only be created
+    // once.
+    //
+    // A read-then-write check loses the race that matters: two people pasting
+    // the same bank reference at the same moment both read "not taken" and both
+    // write. Here the second write is a create against a document that already
+    // exists, and `allow create` alone refuses it — no transaction, no index, no
+    // race. The client batches this with the request, so the pair lands or
+    // neither does.
+    match /paymentUtrs/{utrKey} {
+      allow read: if verifiesPayments();
+      allow create: if signedIn()
+        && request.resource.data.uid == request.auth.uid;
+      // Never rewritten, only cleared by the desk when a payment is struck out.
+      allow update: if false;
+      allow delete: if verifiesPayments();
+    }
+
+    // What the desk sent one person. Addressed, unlike `notifications`, which is
+    // a broadcast to an audience.
+    match /userNotices/{uid}/items/{noticeId} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      // The owner may only ever mark one read; the words are the desk's.
+      allow update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+      allow create, delete: if verifiesPayments() || isVendorModerator();
+    }
+
     match /matrimonyInterests/{interestId} {
       allow read: if signedIn() && (
            request.auth.uid == resource.data.fromUid
@@ -427,7 +536,14 @@ service cloud.firestore {
       // force-update flags before anyone signs in. Every other settings
       // document stays internal — settings/bootstrap in particular records who
       // claimed the Super Admin seat.
-      allow read: if docId == 'app' || docId == 'matrimony' || isEditor();
+      // settings/payments is readable by anyone signed in, because that is who
+      // is about to pay: they need the UPI id and the QR in front of them. It
+      // is not public, though. Bank account details in an open document are
+      // the raw material for a convincing impersonation of the association.
+      allow read: if docId == 'app'
+        || docId == 'matrimony'
+        || (docId == 'payments' && signedIn())
+        || isEditor();
 
       // settings/bootstrap is write-once by the first account ever to sign in;
       // at that moment their users/ document does not exist yet, so

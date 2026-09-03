@@ -2,7 +2,11 @@ import crypto from "node:crypto";
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { verifyIdToken } from "@/lib/server/firebase-admin";
-import { grantSubscription, recordPayment } from "@/lib/server/entitlements";
+import {
+  grantSubscription,
+  grantVendorListing,
+  recordPayment,
+} from "@/lib/server/entitlements";
 
 export const runtime = "nodejs";
 
@@ -61,12 +65,18 @@ export async function POST(request: Request) {
 
   let orderUid: string | undefined;
   let orderPlanId: string | undefined;
+  let orderVendorId: string | null = null;
   let amountInPaise = 0;
 
   try {
     const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
     const order = await razorpay.orders.fetch(orderId);
-    const notes = (order.notes ?? {}) as { uid?: string; planId?: string };
+    const notes = (order.notes ?? {}) as {
+      uid?: string;
+      planId?: string;
+      vendorId?: string;
+    };
+    orderVendorId = notes.vendorId ?? null;
     orderUid = notes.uid;
     orderPlanId = notes.planId;
     amountInPaise = Number(order.amount) || 0;
@@ -93,13 +103,23 @@ export async function POST(request: Request) {
     source: "checkout",
   });
 
-  const result = await grantSubscription({
-    uid,
-    planId: orderPlanId,
-    paymentId,
-    orderId,
-    amountInPaise,
-  });
+  // Which of the two things was bought is decided by the order Razorpay holds,
+  // not by the browser: the note was written when the order was created and is
+  // read back from Razorpay here.
+  const result = orderVendorId
+    ? await grantVendorListing({
+        uid,
+        vendorId: orderVendorId,
+        planId: orderPlanId,
+        paymentId,
+      })
+    : await grantSubscription({
+        uid,
+        planId: orderPlanId,
+        paymentId,
+        orderId,
+        amountInPaise,
+      });
 
   if (!result.granted) {
     // The money moved but the entitlement did not. Say so plainly rather than

@@ -10,6 +10,7 @@ export const ROLES = [
   "contributor",
   "playlist_manager",
   "matrimony_moderator",
+  "vendor_moderator",
   "member",
 ] as const;
 
@@ -21,6 +22,7 @@ export const ROLE_LABELS: Record<Role, string> = {
   contributor: "Contributor",
   playlist_manager: "Playlist Manager",
   matrimony_moderator: "Matrimony Moderator",
+  vendor_moderator: "Vendor Moderator",
   member: "Member",
 };
 
@@ -30,6 +32,8 @@ export const ROLE_DESCRIPTIONS: Record<Role, string> = {
   contributor: "Writes and submits articles; sees only their own drafts.",
   playlist_manager: "Manages songs, playlists and artist pages only.",
   matrimony_moderator: "Reviews matrimony profiles and reports. No news access.",
+  vendor_moderator:
+    "Reviews wedding service listings — halls, catering, photography and the rest. No news or matrimony access.",
   member:
     "A reader. Can use matrimony and vote in polls; no access to the desk at all.",
 };
@@ -755,6 +759,15 @@ export interface MatrimonyReport {
  */
 export interface SubscriptionPlan {
   id: string;
+  /**
+   * What the plan sells.
+   *
+   * One collection rather than two, because a plan is a plan: a name, a price
+   * and a term. The difference is what the money buys — a member's browsing, or
+   * a vendor's listing — and that is one field, not a second admin screen and a
+   * second set of price-reading code on the server.
+   */
+  kind: PlanKind;
   name: string;
   nameTa: string;
   /**
@@ -842,4 +855,316 @@ export interface Subscription {
   lastOrderId: string | null;
   amountInPaise: number;
   updatedAt: Timestamp | null;
+}
+
+export const PLAN_KINDS = ["matrimony", "vendor"] as const;
+export type PlanKind = (typeof PLAN_KINDS)[number];
+
+export const PLAN_KIND_LABELS: Record<PlanKind, string> = {
+  matrimony: "Matrimony — browsing and interests",
+  vendor: "Vendor — one directory listing",
+};
+
+/* ========================================================================== */
+/*  VENDORS                                                                    */
+/* ========================================================================== */
+
+/**
+ * The wedding services directory.
+ *
+ * Six categories rather than the forty a wedding actually involves. These are
+ * the bookings with real money and real scarcity behind them — a hall in season
+ * is the thing families genuinely struggle to find — and a directory with six
+ * full categories reads as a service where one with forty empty ones reads as
+ * abandoned. The rest are added when there are vendors to fill them.
+ */
+export const VENDOR_CATEGORIES = [
+  "hall",
+  "catering",
+  "photography",
+  "decoration",
+  "transport",
+  "music",
+] as const;
+
+export type VendorCategory = (typeof VENDOR_CATEGORIES)[number];
+
+export const VENDOR_CATEGORY_LABELS: Record<VendorCategory, string> = {
+  hall: "Marriage halls",
+  catering: "Catering",
+  photography: "Photography",
+  decoration: "Decoration",
+  transport: "Transport",
+  music: "Music",
+};
+
+export const VENDOR_CATEGORY_LABELS_TA: Record<VendorCategory, string> = {
+  hall: "திருமண மண்டபம்",
+  catering: "சமையல்",
+  photography: "புகைப்படம்",
+  decoration: "அலங்காரம்",
+  transport: "வாகனம்",
+  music: "இசை",
+};
+
+/**
+ * Where a listing is.
+ *
+ * The same shape as a matrimony listing on purpose: a member who has already
+ * put a profile through review should not have to learn a second vocabulary to
+ * put a hall through it.
+ */
+export const VENDOR_STATUSES = [
+  "pending",
+  "approved",
+  "rejected",
+  "paused",
+] as const;
+
+export type VendorStatus = (typeof VENDOR_STATUSES)[number];
+
+export const VENDOR_STATUS_LABELS: Record<VendorStatus, string> = {
+  pending: "Awaiting review",
+  approved: "Live",
+  rejected: "Sent back",
+  paused: "Paused",
+};
+
+export interface Vendor {
+  id: string;
+  /**
+   * Whoever manages the listing. Not the document id, unlike a matrimony
+   * profile: one family often runs the hall and the buses both, and a
+   * one-listing-per-account rule would force them into two logins.
+   */
+  ownerUid: string;
+  category: VendorCategory;
+
+  name: string;
+  /** Lower-cased copy, so a name search can be a range scan. */
+  nameLower: string;
+  about: string;
+  aboutTa: string;
+
+  /** Where it actually is. The Nilgiris is small; the town is the filter. */
+  town: string;
+  address: string;
+  mapUrl: string;
+
+  phone: string;
+  whatsapp: string;
+  email: string;
+
+  photos: ArticleImage[];
+
+  /**
+   * Seats, for a hall. Zero everywhere else.
+   *
+   * First-class rather than buried in `details` because it is the one number
+   * families filter halls by, and a filter cannot read a free-text map.
+   */
+  capacity: number;
+  /** Indicative "from" price. Zero means the vendor would rather be asked. */
+  priceFromInPaise: number;
+
+  /**
+   * Whatever else this category needs — vehicle types, plates served, hours.
+   *
+   * Free-form on purpose: six categories want six different fact sheets, and
+   * six rigid schemas would be six migrations the first time a vendor asks for
+   * a field nobody anticipated.
+   */
+  details: Record<string, string>;
+
+  status: VendorStatus;
+  reviewNote: string | null;
+  reviewedBy: string | null;
+  reviewedAt: Timestamp | null;
+
+  /** The plan that was bought. Null on a listing that has never been paid for. */
+  planId: string | null;
+  /**
+   * Paid up to here. A listing is live only when it is approved AND this is in
+   * the future — two gates, because a moderator's yes and a vendor's payment
+   * are different facts and either can lapse without the other.
+   */
+  paidUntil: Timestamp | null;
+  /** Paid placement, set by the desk rather than bought directly. */
+  featured: boolean;
+
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+  viewCount: number;
+}
+
+/** A listing is only in the directory when both gates are open. */
+export function isVendorLive(vendor: Vendor, now: Date = new Date()): boolean {
+  if (vendor.status !== "approved") return false;
+  if (!vendor.paidUntil) return false;
+  return vendor.paidUntil.toDate() > now;
+}
+
+/* ========================================================================== */
+/*  PAYMENTS                                                                   */
+/* ========================================================================== */
+
+/**
+ * Money is taken by UPI and verified by a person.
+ *
+ * No gateway. The association is paid straight into its own account, which
+ * means no percentage, no settlement delay and no onboarding — and it means the
+ * software cannot know a payment happened. A human reconciles it against the
+ * bank, and their approval is what grants anything.
+ *
+ * That trade is deliberate and it has a cost: approval is manual, so somebody
+ * has to do it, and a member who pays at midnight waits. Everything below is
+ * shaped around making that wait legible rather than pretending it is instant.
+ */
+
+/** Where the association would like to be paid. Edited in the admin. */
+export interface PaymentSettings {
+  /** Shown in order; the first is the default in the app's UPI intent. */
+  upiIds: Array<{ label: string; vpa: string }>;
+  /** The name UPI shows the payer. Wrong here reads as a scam to the payer. */
+  payeeName: string;
+
+  bankName: string;
+  accountName: string;
+  accountNumber: string;
+  ifsc: string;
+  branch: string;
+
+  /** A QR the desk generated once, for people who would rather scan. */
+  qrImage: ArticleImage | null;
+
+  instructions: string;
+  instructionsTa: string;
+
+  /** Turns off every "pay now" route without deleting the details. */
+  acceptingPayments: boolean;
+
+  updatedAt: Timestamp | null;
+  updatedBy: string | null;
+}
+
+export const DEFAULT_PAYMENT_SETTINGS: Omit<
+  PaymentSettings,
+  "updatedAt" | "updatedBy"
+> = {
+  upiIds: [],
+  payeeName: "",
+  bankName: "",
+  accountName: "",
+  accountNumber: "",
+  ifsc: "",
+  branch: "",
+  qrImage: null,
+  instructions: "",
+  instructionsTa: "",
+  acceptingPayments: false,
+};
+
+export const PAYMENT_STATUSES = ["submitted", "approved", "rejected"] as const;
+export type PaymentStatus = (typeof PAYMENT_STATUSES)[number];
+
+export const PAYMENT_STATUS_LABELS: Record<PaymentStatus, string> = {
+  submitted: "Waiting for the desk",
+  approved: "Approved",
+  rejected: "Rejected",
+};
+
+/** What the money was for. Drives what an approval grants. */
+export const PAYMENT_PURPOSES = ["matrimony", "vendor"] as const;
+export type PaymentPurpose = (typeof PAYMENT_PURPOSES)[number];
+
+export const PAYMENT_PURPOSE_LABELS: Record<PaymentPurpose, string> = {
+  matrimony: "Matrimony subscription",
+  vendor: "Directory listing",
+};
+
+export const PAYMENT_METHODS = ["upi", "bank"] as const;
+export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export interface PaymentRequest {
+  id: string;
+
+  /**
+   * The code the desk quotes back.
+   *
+   * Generated by us and shown before the payer leaves for their bank app, so a
+   * payment can be found by a reference the association controls rather than
+   * only by a UTR the payer may mistype. It goes in the UPI note field, where
+   * most banks carry it through to the statement.
+   */
+  reference: string;
+
+  uid: string;
+  userName: string;
+  userEmail: string;
+  userPhone: string;
+
+  purpose: PaymentPurpose;
+  planId: string;
+  planName: string;
+  amountInPaise: number;
+  /** Copied from the plan, so a later price edit cannot rewrite what was paid. */
+  months: number;
+
+  /** Set only when the purpose is a listing. Carried for the reports' filters. */
+  vendorId: string | null;
+  vendorName: string;
+  vendorCategory: VendorCategory | null;
+
+  method: PaymentMethod;
+  /**
+   * The bank's reference for the transfer, typed in by the payer.
+   *
+   * Unique across every request, enforced by a companion document rather than
+   * by a query: two people submitting the same UTR is the exact shape of a
+   * duplicate claim, and a read-then-write check loses that race.
+   */
+  utr: string;
+  proof: ArticleImage | null;
+
+  status: PaymentStatus;
+  /** Why it was rejected, or a note on the approval. Sent to the payer. */
+  reviewNote: string | null;
+  reviewedBy: string | null;
+  reviewedByName: string;
+  reviewedAt: Timestamp | null;
+
+  /** What the approval actually granted, kept for the report. */
+  grantedUntil: Timestamp | null;
+
+  createdAt: Timestamp | null;
+  updatedAt: Timestamp | null;
+}
+
+/**
+ * One line in somebody's notices.
+ *
+ * Separate from `NotificationMessage`, which is a broadcast to an audience.
+ * This is addressed to one account, and it carries the reason a payment was
+ * turned down — which is the whole point of telling them at all.
+ */
+export const NOTICE_KINDS = [
+  "payment_approved",
+  "payment_rejected",
+  "vendor_approved",
+  "vendor_rejected",
+] as const;
+
+export type NoticeKind = (typeof NOTICE_KINDS)[number];
+
+export interface UserNotice {
+  id: string;
+  kind: NoticeKind;
+  title: string;
+  titleTa: string;
+  body: string;
+  bodyTa: string;
+  /** The payment or listing this is about. */
+  refId: string | null;
+  read: boolean;
+  createdAt: Timestamp | null;
 }

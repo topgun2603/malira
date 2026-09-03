@@ -95,7 +95,7 @@ export async function recordPayment(input: {
 /** The authoritative price. Read from Firestore, never from the browser. */
 export async function readPlanPrice(
   planId: string,
-): Promise<{ amountInPaise: number; name: string } | null> {
+): Promise<{ amountInPaise: number; name: string; kind: string } | null> {
   const db = adminDb();
   if (!db) return null;
   const snapshot = await db.collection("plans").doc(planId).get();
@@ -104,5 +104,80 @@ export async function readPlanPrice(
   if (data.active === false) return null;
   const amountInPaise = Number(data.priceInPaise);
   if (!Number.isFinite(amountInPaise) || amountInPaise <= 0) return null;
-  return { amountInPaise, name: String(data.name ?? "Plan") };
+  return {
+    amountInPaise,
+    name: String(data.name ?? "Plan"),
+    kind: String(data.kind ?? "matrimony"),
+  };
+}
+
+/**
+ * Puts paid time on a directory listing.
+ *
+ * The vendor equivalent of [grantSubscription], and separate from it because
+ * the thing being extended is different: a member's entitlement hangs off the
+ * account, a listing's hangs off the listing, and one account may hold several
+ * listings that expire on different days.
+ *
+ * Approval is not granted here. A moderator's yes and a vendor's payment are
+ * different facts, and paying has never been a way past review.
+ */
+/** Whether this account manages that listing. Checked before an order is made. */
+export async function ownsVendor(uid: string, vendorId: string): Promise<boolean> {
+  const db = adminDb();
+  if (!db) return false;
+  const snapshot = await db.collection("vendors").doc(vendorId).get();
+  return snapshot.exists && snapshot.data()?.ownerUid === uid;
+}
+
+export async function grantVendorListing(input: {
+  uid: string;
+  vendorId: string;
+  planId: string;
+  paymentId: string;
+}): Promise<{ granted: boolean; reason?: string }> {
+  const db = adminDb();
+  if (!db) return { granted: false, reason: "admin-not-configured" };
+
+  const [planSnapshot, vendorSnapshot] = await Promise.all([
+    db.collection("plans").doc(input.planId).get(),
+    db.collection("vendors").doc(input.vendorId).get(),
+  ]);
+
+  if (!planSnapshot.exists) return { granted: false, reason: "unknown-plan" };
+  if (!vendorSnapshot.exists) return { granted: false, reason: "unknown-vendor" };
+
+  const vendor = vendorSnapshot.data() ?? {};
+  // The order carries the buyer; this is where it is checked against the thing
+  // being bought, so nobody can pay to extend somebody else's listing.
+  if (vendor.ownerUid !== input.uid) {
+    return { granted: false, reason: "not-the-owner" };
+  }
+  if (vendor.lastPaymentId === input.paymentId) {
+    // Checkout callback and webhook both fire for the same payment.
+    return { granted: true, reason: "already-granted" };
+  }
+
+  const plan = planSnapshot.data() ?? {};
+  const months = Number(plan.months) || 1;
+
+  const now = new Date();
+  // Extended from the current expiry when there is time left, so renewing early
+  // never costs a vendor the days they have already paid for.
+  const current = vendor.paidUntil as Timestamp | undefined;
+  const base = current && current.toDate() > now ? current.toDate() : now;
+  const paidUntil = new Date(base);
+  paidUntil.setMonth(paidUntil.getMonth() + months);
+
+  await vendorSnapshot.ref.set(
+    {
+      planId: input.planId,
+      paidUntil: Timestamp.fromDate(paidUntil),
+      lastPaymentId: input.paymentId,
+      updatedAt: FieldValue.serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  return { granted: true };
 }

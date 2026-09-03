@@ -17,6 +17,8 @@ export type Permission =
   | "events.manage"
   | "playlists.manage"
   | "matrimony.moderate"
+  | "vendors.moderate"
+  | "payments.verify"
   | "carousels.manage"
   | "polls.manage"
   | "ads.manage"
@@ -40,6 +42,8 @@ const MATRIX: Record<Role, Permission[]> = {
     "polls.manage",
     "ads.manage",
     "matrimony.moderate",
+    "vendors.moderate",
+    "payments.verify",
     "notifications.send",
     "analytics.view",
     "users.manage",
@@ -65,6 +69,7 @@ const MATRIX: Record<Role, Permission[]> = {
   // Matrimony is a separate duty from the newsroom: a moderator sees profiles
   // and reports, and nothing else.
   matrimony_moderator: ["matrimony.moderate"],
+  vendor_moderator: ["vendors.moderate"],
   // The default for anyone who signs in. Deliberately empty: a member is a
   // reader, and the desk is not theirs. Signing in must never, by itself,
   // grant the ability to publish.

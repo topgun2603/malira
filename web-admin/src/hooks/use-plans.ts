@@ -27,10 +27,17 @@ export const planKeys = {
 };
 
 /** Public: the landing page prices are marketing and render before sign-in. */
-export function useActivePlans() {
+/**
+ * The plans on sale, for one side of the product.
+ *
+ * Wrapped rather than passed by reference: react-query hands its own context to
+ * a bare function reference, which would arrive as the `kind` argument and
+ * quietly return the wrong list.
+ */
+export function useActivePlans(kind: SubscriptionPlan["kind"] = "matrimony") {
   return useQuery({
-    queryKey: planKeys.active,
-    queryFn: listActivePlans,
+    queryKey: [...planKeys.active, kind],
+    queryFn: () => listActivePlans(kind),
     staleTime: 5 * 60_000,
   });
 }

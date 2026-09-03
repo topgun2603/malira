@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Razorpay from "razorpay";
 import { verifyIdToken } from "@/lib/server/firebase-admin";
-import { readPlanPrice } from "@/lib/server/entitlements";
+import { ownsVendor, readPlanPrice } from "@/lib/server/entitlements";
 
 export const runtime = "nodejs";
 
@@ -32,8 +32,12 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Sign in first." }, { status: 401 });
   }
 
-  const body = (await request.json().catch(() => ({}))) as { planId?: string };
+  const body = (await request.json().catch(() => ({}))) as {
+    planId?: string;
+    vendorId?: string;
+  };
   const planId = typeof body.planId === "string" ? body.planId : null;
+  const vendorId = typeof body.vendorId === "string" ? body.vendorId : null;
   if (!planId) {
     return NextResponse.json({ error: "Pick a plan." }, { status: 400 });
   }
@@ -46,6 +50,30 @@ export async function POST(request: Request) {
     );
   }
 
+  // A vendor plan buys time on one named listing, so the listing has to be
+  // named before the money moves — and it has to belong to whoever is paying.
+  // Checked here rather than only at verify: an order that could not possibly
+  // be granted should never reach a payment screen.
+  if (plan.kind === "vendor") {
+    if (!vendorId) {
+      return NextResponse.json(
+        { error: "Pick which listing this is for." },
+        { status: 400 },
+      );
+    }
+    if (!(await ownsVendor(uid, vendorId))) {
+      return NextResponse.json(
+        { error: "That listing is not yours." },
+        { status: 403 },
+      );
+    }
+  } else if (vendorId) {
+    return NextResponse.json(
+      { error: "That plan is not a listing plan." },
+      { status: 400 },
+    );
+  }
+
   try {
     const razorpay = new Razorpay({ key_id: keyId, key_secret: keySecret });
     const order = await razorpay.orders.create({
@@ -54,8 +82,10 @@ export async function POST(request: Request) {
       // Binds the order to this account and plan before any money moves. The
       // verify route reads these back from Razorpay rather than trusting the
       // browser's word for who paid for what.
-      notes: { uid, planId },
-      receipt: `sub_${uid.slice(0, 10)}_${planId.slice(0, 10)}`,
+      notes: vendorId ? { uid, planId, vendorId } : { uid, planId },
+      receipt: vendorId
+        ? `ven_${vendorId.slice(0, 10)}_${planId.slice(0, 8)}`
+        : `sub_${uid.slice(0, 10)}_${planId.slice(0, 10)}`,
     });
 
     return NextResponse.json({
