@@ -84,17 +84,22 @@ export function PlanCards({
         return (
           <Card
             key={plan.id}
-            className={cn("relative", plan.highlight && "border-primary/40")}
+            className={cn(plan.highlight && "ring-primary/40 ring-2")}
           >
-            {plan.highlight && (
-              <span className="bg-primary text-primary-foreground absolute -top-3 left-6 rounded-full px-3 py-0.5 text-xs font-medium">
-                {lang === "ta" ? "பரிந்துரை" : "Most useful"}
-              </span>
-            )}
             <CardContent className="flex h-full flex-col p-6">
-              <p className="font-medium">
-                {lang === "ta" && plan.nameTa ? plan.nameTa : plan.name}
-              </p>
+              {/* In the card, not hanging off it. The ribbon used to sit at
+                  a negative top offset, and Card carries overflow-hidden, so
+                  the badge was sliced in half by the card's own top edge. */}
+              <div className="flex items-start justify-between gap-3">
+                <p className="font-medium">
+                  {lang === "ta" && plan.nameTa ? plan.nameTa : plan.name}
+                </p>
+                {plan.highlight && (
+                  <span className="bg-primary text-primary-foreground shrink-0 rounded-full px-2.5 py-0.5 text-xs font-medium">
+                    {lang === "ta" ? "பரிந்துரை" : "Most useful"}
+                  </span>
+                )}
+              </div>
               <PriceTag plan={plan} className="mt-2" />
 
               <ul className="text-muted-foreground mt-5 space-y-2 text-sm">

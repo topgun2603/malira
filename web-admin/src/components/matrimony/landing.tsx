@@ -10,12 +10,10 @@ import {
   Heart,
   Lock,
   PhoneOff,
-  ShieldCheck,
   UserRound,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { PlanCards } from "@/components/matrimony/plan-cards";
 import { FadeIn, StaggerItem, StaggerList } from "@/components/motion/primitives";
 import { useLanguage } from "@/components/reader/language";
 import { cn } from "@/lib/utils";
@@ -451,31 +449,6 @@ export function MatrimonyLanding() {
               <ArrowRight className="size-4" />
             </Link>
           </Button>
-        </div>
-      </section>
-
-      {/* ------------------------------ pricing --------------------------- */}
-      <section className="bg-muted/40 border-y">
-        <div className="mx-auto w-full max-w-5xl px-4 py-16 sm:px-6 sm:py-20">
-          <div className="mb-10 text-center">
-            <h2 className="text-3xl font-semibold tracking-tight sm:text-4xl">
-              {lang === "ta" ? "பதிவு இலவசம்" : "Listing is free"}
-            </h2>
-            <p className="text-muted-foreground mx-auto mt-3 max-w-xl leading-relaxed">
-              {lang === "ta"
-                ? "மேலும் விவரங்களைப் பார்க்கவும் அதிக விருப்பங்களை அனுப்பவும் மட்டுமே கட்டணம்."
-                : "You only pay to see more profiles and send more interests. Never to be seen."}
-            </p>
-          </div>
-
-          <PlanCards onSignInHref={signInHref} />
-
-          <p className="text-muted-foreground mt-6 flex items-start justify-center gap-2 text-center text-xs leading-relaxed">
-            <ShieldCheck className="mt-0.5 size-3.5 shrink-0" />
-            {lang === "ta"
-              ? "தொலைபேசி எண் ஒருபோதும் விற்கப்படுவதில்லை. கட்டணம் செலுத்தினாலும் சம்மதம் தேவை."
-              : "The contact reveal is never sold. Paying does not let anyone past a decision that is not theirs to make."}
-          </p>
         </div>
       </section>
 

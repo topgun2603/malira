@@ -19,6 +19,7 @@ const NAV = [
   { href: "/events", en: "Events", ta: "நிகழ்வுகள்" },
   { href: "/songs", en: "Songs", ta: "பாடல்கள்" },
   { href: "/archive", en: "Archive", ta: "பழையவை" },
+  { href: "/subscription", en: "Subscription", ta: "சந்தா" },
 ] as const;
 
 export function SiteHeader() {
