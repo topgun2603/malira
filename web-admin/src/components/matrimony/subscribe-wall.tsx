@@ -8,11 +8,15 @@ import { useEntitlement, useStartCheckout } from "@/hooks/use-subscription";
 import { PriceTag, rupees } from "@/components/matrimony/price-tag";
 
 /**
- * The wall at the end of a free member's results.
+ * The wall in front of the results.
  *
- * It sits *after* the profiles they can see rather than replacing them, so the
- * free tier is genuinely useful on its own. A wall that fires before anything
- * is shown reads as a bait-and-switch and gets a matrimony service uninstalled.
+ * It used to sit *after* the handful a free account could see, because a wall
+ * that fires before anything is shown reads as a bait-and-switch. Browsing is
+ * now subscribers-only, so it stands in front of the whole list instead, and
+ * the count it names is the argument for paying: these are real profiles that
+ * matched the filters, not a promise.
+ *
+ * Listing is still free, which is what keeps that count honest.
  *
  * The offer comes from the plans collection: whatever the desk priced is what
  * appears here.
@@ -35,8 +39,8 @@ export function SubscribeWall({ hidden }: { hidden: number }) {
 
       <h2 className="text-2xl font-semibold tracking-tight sm:text-3xl">
         {lang === "ta"
-          ? `மேலும் ${hidden} விவரங்கள் உள்ளன`
-          : `${hidden} more ${hidden === 1 ? "profile" : "profiles"} match your search`}
+          ? `${hidden} விவரங்கள் உங்கள் தேடலுக்குப் பொருந்துகின்றன`
+          : `${hidden} ${hidden === 1 ? "profile matches" : "profiles match"} your search`}
       </h2>
 
       {!plan ? (

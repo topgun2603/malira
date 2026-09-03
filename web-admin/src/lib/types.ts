@@ -524,6 +524,14 @@ export interface AppSettings {
   contactEmail: string;
   contactPhone: string;
   contactAddress: string;
+  /**
+   * Where the app sends somebody who wants to subscribe.
+   *
+   * Browsing needs a plan and the Android app cannot sell one: Play requires
+   * Play Billing for in-app digital goods at 15-30%, so purchases are web-only.
+   * The app links here rather than showing a wall with no way past it.
+   */
+  subscribeUrl: string;
   /** Android versionCode below this is forced to update. */
   minAndroidVersion: number;
   forceUpdate: boolean;
@@ -540,6 +548,7 @@ export const DEFAULT_SETTINGS: Omit<AppSettings, "updatedAt" | "updatedBy"> = {
   contactEmail: "",
   contactPhone: "",
   contactAddress: "",
+  subscribeUrl: "",
   minAndroidVersion: 1,
   forceUpdate: false,
   updateMessage: "A newer version of the app is available.",

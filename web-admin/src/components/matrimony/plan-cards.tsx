@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLanguage } from "@/components/reader/language";
-import { useActivePlans, useMatrimonyLimits } from "@/hooks/use-plans";
+import { useActivePlans } from "@/hooks/use-plans";
 import { useEntitlement, useStartCheckout } from "@/hooks/use-subscription";
 import { cn } from "@/lib/utils";
 import { PriceTag, rupees } from "@/components/matrimony/price-tag";
@@ -26,7 +26,6 @@ export function PlanCards({
 }) {
   const { lang } = useLanguage();
   const { data: plans, isLoading } = useActivePlans();
-  const { data: limits } = useMatrimonyLimits();
   const { premium, subscription } = useEntitlement();
   const checkout = useStartCheckout();
 
@@ -39,43 +38,13 @@ export function PlanCards({
     );
   }
 
-  const freeFeatures =
-    lang === "ta"
-      ? [
-          "விவரங்களைப் பதிவு செய்யலாம்",
-          `${limits?.freeProfileViews ?? 6} விவரங்களைப் பார்க்கலாம்`,
-          `மாதம் ${limits?.freeInterestsPerMonth ?? 3} விருப்பங்கள்`,
-          "சம்மதத்திற்குப் பிறகு தொடர்பு விவரங்கள்",
-        ]
-      : [
-          "List a profile, reviewed by a moderator",
-          `Browse ${limits?.freeProfileViews ?? 6} profiles`,
-          `Send ${limits?.freeInterestsPerMonth ?? 3} interests a month`,
-          "Contact details on a mutual accept",
-        ];
-
   return (
     <div
       className={cn(
         "grid gap-5",
-        (plans?.length ?? 0) >= 2 ? "md:grid-cols-3" : "md:grid-cols-2",
+        (plans?.length ?? 0) >= 2 ? "md:grid-cols-2" : "md:grid-cols-1",
       )}
     >
-      <Card>
-        <CardContent className="p-6">
-          <p className="font-medium">{lang === "ta" ? "இலவசம்" : "Free"}</p>
-          <p className="mt-2 text-3xl font-semibold tracking-tight">₹0</p>
-          <ul className="text-muted-foreground mt-5 space-y-2 text-sm">
-            {freeFeatures.map((line) => (
-              <li key={line} className="flex items-start gap-2">
-                <Check className="text-primary mt-0.5 size-4 shrink-0" />
-                {line}
-              </li>
-            ))}
-          </ul>
-        </CardContent>
-      </Card>
-
       {(plans ?? []).map((plan) => {
         const current = premium && subscription?.planId === plan.id;
         const features =

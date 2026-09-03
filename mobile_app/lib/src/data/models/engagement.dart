@@ -176,6 +176,7 @@ class AppSettings {
     required this.contactEmail,
     required this.contactPhone,
     required this.contactAddress,
+    required this.subscribeUrl,
     required this.minAndroidVersion,
     required this.forceUpdate,
     required this.updateMessage,
@@ -191,6 +192,7 @@ class AppSettings {
       contactEmail: data.str('contactEmail'),
       contactPhone: data.str('contactPhone'),
       contactAddress: data.str('contactAddress'),
+      subscribeUrl: data.str('subscribeUrl'),
       minAndroidVersion: data.integer('minAndroidVersion', 1),
       forceUpdate: data.flag('forceUpdate'),
       updateMessage: data.str(
@@ -208,6 +210,7 @@ class AppSettings {
     contactEmail: '',
     contactPhone: '',
     contactAddress: '',
+    subscribeUrl: '',
     minAndroidVersion: 1,
     forceUpdate: false,
     updateMessage: 'A newer version of the app is available.',
@@ -220,6 +223,13 @@ class AppSettings {
   final String contactEmail;
   final String contactPhone;
   final String contactAddress;
+
+  /// Where to send somebody who wants to subscribe.
+  ///
+  /// The app cannot sell a plan: Play requires Play Billing for anything bought
+  /// inside an app, at 15-30%, so purchases are web-only. Browsing needs a plan,
+  /// so without this the wall has no door.
+  final String subscribeUrl;
   final int minAndroidVersion;
   final bool forceUpdate;
   final String updateMessage;

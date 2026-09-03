@@ -49,13 +49,23 @@ export function interestsThisMonth(interests: MatrimonyInterest[]): number {
   }).length;
 }
 
+/**
+ * How many interests this account may still send.
+ *
+ * Zero without a subscription, rather than a monthly allowance: sending an
+ * interest is the act the plan is sold for.
+ *
+ * `settings/matrimony` still carries a free allowance and the desk can still
+ * set it; nothing reads it while matrimony is subscribers-only. Turning the
+ * free tier back on is this function plus the `visible` line in browse, not an
+ * excavation — which is why the setting was left alone rather than deleted.
+ */
 export function remainingInterests(
   interests: MatrimonyInterest[],
   premium: boolean,
-  freeAllowance: number,
 ): number | "unlimited" {
   if (premium) return "unlimited";
-  return Math.max(0, freeAllowance - interestsThisMonth(interests));
+  return 0;
 }
 
 /* -------------------------------------------------------------------------- */

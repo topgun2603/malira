@@ -439,6 +439,16 @@ class Strings {
     'You have used all your interests this month.',
     'இந்த மாதத்திற்கான விருப்பங்கள் முடிந்துவிட்டன.',
   );
+  String get browsingIsForMembers => _t(
+    'Browsing is for subscribers',
+    'பார்வதற்கு சந்தா தேவை',
+  );
+  String get browsingIsForMembersBody => _t(
+    'Your listing stays up and free. To look through other profiles you need a plan, and plans are bought on the website.',
+    'உங்கள் தகவல் இலவசமாகவே தொடரும். மற்றவர் தகவல்களைப் பார்க்க சந்தா தேவை; அது இணையதளத்தில் கிடைக்கும்.',
+  );
+  String get subscribeOnWeb =>
+      _t('Subscribe on the website', 'இணையதளத்தில் சந்தா சேருங்கள்');
   String get premiumOnWeb => _t(
     'More interests are available on the website.',
     'இணையதளத்தில் கூடுதல் விருப்பங்கள் கிடைக்கும்.',

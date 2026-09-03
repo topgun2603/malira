@@ -27,7 +27,7 @@ import { useEntitlement } from "@/hooks/use-subscription";
 export default function SubscriptionPage() {
   const { lang } = useLanguage();
   const { firebaseUser } = useAuth();
-  const { premium, subscription, remaining, freeProfileViews, freeInterests } =
+  const { premium, subscription, remaining } =
     useEntitlement();
   const ta = lang === "ta";
 
@@ -63,8 +63,8 @@ export default function SubscriptionPage() {
                   {premium
                     ? subscription?.planName || (ta ? "பிரீமியம்" : "Premium")
                     : ta
-                      ? "இலவசத் திட்டம்"
-                      : "Free plan"}
+                      ? "சந்தா இல்லை"
+                      : "No plan"}
                 </p>
                 <p className="text-muted-foreground text-sm">
                   {premium && subscription?.expiresAt
@@ -105,15 +105,15 @@ export default function SubscriptionPage() {
             icon: Eye,
             title: ta ? "தெரிவதற்குக் கட்டணம் இல்லை" : "Being seen is never paid for",
             body: ta
-              ? `இலவசப் பதிவும் அனைவருக்கும் தெரியும். இலவசமாக ${freeProfileViews} விவரங்கள், மாதம் ${freeInterests} விருப்பங்கள்.`
-              : `A free listing is shown to everyone. Free includes ${freeProfileViews} profiles and ${freeInterests} interests a month.`,
+              ? "பதிவு எப்போதும் இலவசம், அனைவருக்கும் தெரியும். பார்ப்பதற்கு மட்டுமே கட்டணம்."
+              : "Listing stays free and is shown to every subscriber. The plan is for looking, not for being looked at.",
           },
           {
             icon: Undo2,
             title: ta ? "தானாகப் புதுப்பிக்கப்படாது" : "It does not auto-renew",
             body: ta
               ? "ஒரு முறை கட்டணம், ஒரு காலத்திற்கு. முடிந்ததும் இலவசத் திட்டத்திற்கே திரும்புவீர்கள்."
-              : "One payment, one term. When it ends you simply go back to the free plan — there is nothing to cancel.",
+              : "One payment, one term. When it ends your listing stays up and browsing stops — there is nothing to cancel.",
           },
         ].map(({ icon: Icon, title, body }) => (
           <Card key={title} className="bg-muted/30 border-0 shadow-none">

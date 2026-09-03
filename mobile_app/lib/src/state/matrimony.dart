@@ -56,16 +56,16 @@ final matrimonySearchProvider = FutureProvider<List<MatrimonyProfile>>((
       .where((profile) => profile.id != uid)
       .toList(growable: false);
 
-  // A free account sees a capped number of listings, the same truncation the
-  // web browse applies. The cap is on what is *shown*, not on what was read —
-  // matching the web exactly, including the fact that a determined reader could
-  // see past it. Making it a real limit needs a server-side query, which is a
-  // decision for the association rather than something to invent here.
-  if (ref.watch(isPremiumProvider)) return others;
-
-  final limits =
-      ref.watch(matrimonyLimitsProvider).value ?? MatrimonyLimits.defaults;
-  return others.take(limits.freeProfileViews).toList(growable: false);
+  // Browsing is for subscribers. Listing is not: a member still writes their
+  // own profile for nothing, because a service that charged to be looked at
+  // would have nobody to look at.
+  //
+  // Nothing is shown rather than a capped handful. The cap this replaced was on
+  // what was *displayed* and not on what was read, so it was never a real
+  // limit — and a wall that lets a few through is a worse argument for paying
+  // than the honest count the browse tab now shows.
+  if (!ref.watch(isPremiumProvider)) return const [];
+  return others;
 });
 
 /// One listing, by uid.
@@ -157,15 +157,14 @@ final isPremiumProvider = Provider<bool>(
 );
 
 /// Interests left this month. Null means unlimited (a held plan).
+///
+/// Zero without a plan: sending an interest is the act the plan is sold for.
+/// `settings/matrimony` still carries a free allowance and the desk can still
+/// set it — nothing reads it while matrimony is subscribers-only, and leaving
+/// it in place is what makes turning the free tier back on a one-line change.
 final remainingInterestsProvider = Provider<int?>((ref) {
   final sent = ref.watch(sentInterestsProvider).value ?? const [];
-  final limits =
-      ref.watch(matrimonyLimitsProvider).value ?? MatrimonyLimits.defaults;
-  return remainingInterests(
-    sent,
-    ref.watch(isPremiumProvider),
-    limits.freeInterestsPerMonth,
-  );
+  return remainingInterests(sent, ref.watch(isPremiumProvider), 0);
 });
 
 /// What this member may do about a given profile right now.

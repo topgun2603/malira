@@ -18,7 +18,7 @@ import { useEntitlement } from "@/hooks/use-subscription";
  */
 export function PlanStrip() {
   const { lang } = useLanguage();
-  const { premium, subscription, remaining } = useEntitlement();
+  const { premium, subscription } = useEntitlement();
 
   if (premium && subscription?.expiresAt) {
     return (
@@ -44,13 +44,13 @@ export function PlanStrip() {
   return (
     <div className="text-muted-foreground flex flex-wrap items-center gap-2 text-sm">
       <Badge variant="secondary" className="font-normal">
-        {lang === "ta" ? "இலவசத் திட்டம்" : "Free plan"}
+        {lang === "ta" ? "சந்தா இல்லை" : "No plan"}
       </Badge>
-      {remaining !== "unlimited" && (
-        <span>
-          {remaining} {lang === "ta" ? "விருப்பங்கள் மீதம்" : "interests left this month"}
-        </span>
-      )}
+      <span>
+        {lang === "ta"
+          ? "பதிவு இலவசம். பார்ப்பதற்குச் சந்தா தேவை."
+          : "Listing is free. Browsing needs a plan."}
+      </span>
       <Button variant="link" size="sm" className="h-auto p-0" asChild>
         <Link href="/matrimony/plans">
           {lang === "ta" ? "திட்டங்களைப் பார்" : "See plans"}

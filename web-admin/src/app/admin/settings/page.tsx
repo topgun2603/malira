@@ -220,6 +220,23 @@ function SettingsForm({ settings }: { settings: AppSettings }) {
               </div>
 
               <div className="space-y-2">
+                <Label htmlFor="subscribeUrl">Subscribe link</Label>
+                <Input
+                  id="subscribeUrl"
+                  value={draft.subscribeUrl}
+                  placeholder="https://your-site/subscription"
+                  onChange={(event) => set("subscribeUrl", event.target.value)}
+                />
+                <p className="text-muted-foreground text-xs">
+                  Where the app sends somebody who wants to subscribe. Browsing
+                  needs a plan and the app cannot sell one &mdash; Play requires
+                  its own billing for anything bought inside an app &mdash; so
+                  this is the way through. Leave it empty and the app says
+                  browsing is for subscribers without offering a route.
+                </p>
+              </div>
+
+              <div className="space-y-2">
                 <Label htmlFor="playStoreUrl">Play Store link</Label>
                 <Input
                   id="playStoreUrl"

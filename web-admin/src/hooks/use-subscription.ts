@@ -51,7 +51,7 @@ export function useEntitlement() {
     plans: plans ?? [],
     freeProfileViews: limits?.freeProfileViews ?? DEFAULT_MATRIMONY_LIMITS.freeProfileViews,
     freeInterests,
-    remaining: remainingInterests(sent ?? [], premium, freeInterests),
+    remaining: remainingInterests(sent ?? [], premium),
   };
 }
 

@@ -33,7 +33,7 @@ import {
 
 export function MatrimonyBrowse() {
   const { lang } = useLanguage();
-  const { premium, freeProfileViews } = useEntitlement();
+  const { premium } = useEntitlement();
 
   const [gender, setGender] = useState<"male" | "female" | "all">("all");
   const [maritalStatus, setMaritalStatus] = useState<MaritalStatus | "all">("all");
@@ -100,7 +100,10 @@ export function MatrimonyBrowse() {
   const all = profiles ?? [];
   // Capped at the results boundary rather than in the query: the count of what
   // is held back is itself the argument for upgrading, and it has to be honest.
-  const visible = premium ? all : all.slice(0, freeProfileViews);
+  // Browsing is for subscribers. Listing is not — a member still writes their
+  // own profile for nothing, because a matrimony service that charged to be
+  // looked at would have nobody to look at.
+  const visible = premium ? all : [];
   const hidden = all.length - visible.length;
 
   return (
@@ -314,11 +317,11 @@ export function MatrimonyBrowse() {
           />
         ) : (
           <>
-            <p className="text-muted-foreground mb-4 text-sm">
-              {premium
-                ? `${all.length} ${all.length === 1 ? "profile" : "profiles"}`
-                : `Showing ${visible.length} of ${all.length}`}
-            </p>
+            {premium && (
+              <p className="text-muted-foreground mb-4 text-sm">
+                {`${all.length} ${all.length === 1 ? "profile" : "profiles"}`}
+              </p>
+            )}
 
             <StaggerList className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
               {visible.map((profile) => (
@@ -329,7 +332,7 @@ export function MatrimonyBrowse() {
             </StaggerList>
 
             {hidden > 0 && (
-              <div className="mt-8">
+              <div className={visible.length > 0 ? "mt-8" : undefined}>
                 <SubscribeWall hidden={hidden} />
               </div>
             )}

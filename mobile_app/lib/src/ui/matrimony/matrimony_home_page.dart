@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../core/l10n/strings.dart';
@@ -9,6 +10,7 @@ import '../../data/models/matrimony.dart';
 import '../../data/repositories/matrimony_repository.dart';
 import '../../state/auth.dart';
 import '../../state/matrimony.dart';
+import '../../state/providers.dart';
 import '../../state/preferences.dart';
 import '../common/app_logo.dart';
 import '../common/states.dart';
@@ -326,6 +328,28 @@ class _BrowseTab extends ConsumerWidget {
     final strings = ref.watch(stringsProvider);
     final results = ref.watch(matrimonySearchProvider);
     final filters = ref.watch(matrimonyFiltersProvider);
+
+    // Browsing needs a plan, and this app cannot sell one: Play requires its
+    // own billing for anything bought inside an app, at 15-30%, so purchases
+    // are web-only. The wall therefore carries a door — a wall without one
+    // would just be an app that stops working.
+    if (!ref.watch(isPremiumProvider)) {
+      final url = ref.watch(appSettingsProvider).value?.subscribeUrl.trim() ?? '';
+      return EmptyState(
+        icon: Icons.lock_outline,
+        title: strings.browsingIsForMembers,
+        body: strings.browsingIsForMembersBody,
+        action: url.isEmpty
+            ? null
+            : FilledButton(
+                onPressed: () => launchUrl(
+                  Uri.parse(url),
+                  mode: LaunchMode.externalApplication,
+                ),
+                child: Text(strings.subscribeOnWeb),
+              ),
+      );
+    }
 
     return Column(
       children: [
