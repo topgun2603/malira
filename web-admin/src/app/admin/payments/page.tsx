@@ -64,6 +64,39 @@ import {
 const rupees = (paise: number) =>
   `₹${(paise / 100).toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
+/**
+ * What a broken read looks like.
+ *
+ * Firestore's two common refusals here read very differently to a person at
+ * the desk, and both used to render as "nothing waiting": a missing composite
+ * index means the query cannot run at all, and permission-denied means this
+ * account is not a Super Admin. Neither is an empty queue, and both need
+ * saying, because the cost of confusing them is somebody concluding a payer
+ * never paid.
+ */
+function QueryFailed({ error }: { error: unknown }) {
+  const message = error instanceof Error ? error.message : String(error);
+  const missingIndex = message.includes("index");
+  const denied = message.includes("permission");
+
+  return (
+    <Alert variant="destructive">
+      <AlertTriangle />
+      <AlertTitle>These could not be loaded</AlertTitle>
+      <AlertDescription className="space-y-2">
+        <p>
+          {missingIndex
+            ? "Firestore needs an index for this query. Claims may well exist — this screen cannot read them."
+            : denied
+              ? "This account is not allowed to read payments. Only a Super Admin can verify them."
+              : "Something went wrong reading the payments."}
+        </p>
+        <p className="font-mono text-xs opacity-80">{message}</p>
+      </AlertDescription>
+    </Alert>
+  );
+}
+
 export default function PaymentsPage() {
   return (
     <>
@@ -98,10 +131,14 @@ export default function PaymentsPage() {
 /* -------------------------------------------------------------------------- */
 
 function PaymentQueue() {
-  const { data, isLoading } = usePaymentReport({ status: "submitted" });
+  const { data, isLoading, error } = usePaymentReport({ status: "submitted" });
   const [reviewing, setReviewing] = useState<PaymentRequest | null>(null);
 
   if (isLoading) return <TableSkeleton />;
+  // A failed query used to land on the empty state below, so a broken screen
+  // and a quiet one looked identical — which is exactly how a missing index
+  // hid real payments here. Say what went wrong instead.
+  if (error) return <QueryFailed error={error} />;
   if (!data?.length) {
     return (
       <EmptyState
@@ -329,7 +366,7 @@ function PaymentReport() {
     [filters, from, to],
   );
 
-  const { data, isLoading } = usePaymentReport(applied);
+  const { data, isLoading, error } = usePaymentReport(applied);
   const { data: matrimonyPlans } = useActivePlans("matrimony");
   const { data: vendorPlans } = useActivePlans("vendor");
   const plans = [...(matrimonyPlans ?? []), ...(vendorPlans ?? [])];
@@ -468,6 +505,8 @@ function PaymentReport() {
 
       {isLoading ? (
         <TableSkeleton />
+      ) : error ? (
+        <QueryFailed error={error} />
       ) : !data?.length ? (
         <EmptyState
           icon={IndianRupee}

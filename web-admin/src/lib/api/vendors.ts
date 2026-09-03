@@ -131,20 +131,22 @@ export async function searchVendors(
   const clauses = [where("status", "==", "approved")];
   if (filters.category) clauses.push(where("category", "==", filters.category));
 
+  // Equalities only. Firestore merges single-field indexes for those on its
+  // own; adding the two orderBys this used to carry would have demanded a
+  // composite index per category and taken the directory down with it.
   const snapshot = await getDocs(
-    query(
-      collection(db, VENDORS),
-      ...clauses,
-      orderBy("featured", "desc"),
-      orderBy("updatedAt", "desc"),
-      limitTo(max),
-    ),
+    query(collection(db, VENDORS), ...clauses, limitTo(max)),
   );
 
   const now = new Date();
   let rows = snapshot.docs
     .map((entry) => toVendor(entry.id, entry.data()))
-    .filter((row) => row.paidUntil !== null && row.paidUntil.toDate() > now);
+    .filter((row) => row.paidUntil !== null && row.paidUntil.toDate() > now)
+    // Featured first, then most recently touched.
+    .sort((a, b) => {
+      if (a.featured !== b.featured) return a.featured ? -1 : 1;
+      return (b.updatedAt?.toMillis() ?? 0) - (a.updatedAt?.toMillis() ?? 0);
+    });
 
   const town = filters.town?.trim().toLowerCase() ?? "";
   if (town) {
@@ -186,17 +188,20 @@ export async function listVendorsByStatus(
   status: VendorStatus | "all",
 ): Promise<Vendor[]> {
   const base = collection(db, VENDORS);
+
+  // Ordered below rather than in the query, for the same reason the payments
+  // report is: an equality plus an ordering on another field needs a composite
+  // index, and without it the queue is not slow, it is empty.
   const snapshot = await getDocs(
     status === "all"
       ? query(base, orderBy("updatedAt", "desc"), limitTo(200))
-      : query(
-          base,
-          where("status", "==", status),
-          orderBy("updatedAt", "desc"),
-          limitTo(200),
-        ),
+      : query(base, where("status", "==", status), limitTo(200)),
   );
-  return snapshot.docs.map((entry) => toVendor(entry.id, entry.data()));
+  return snapshot.docs
+    .map((entry) => toVendor(entry.id, entry.data()))
+    .sort(
+      (a, b) => (b.updatedAt?.toMillis() ?? 0) - (a.updatedAt?.toMillis() ?? 0),
+    );
 }
 
 /* -------------------------------------------------------------------------- */

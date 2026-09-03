@@ -262,18 +262,25 @@ export async function listPayments(
   max = 500,
 ): Promise<PaymentRequest[]> {
   const base = collection(db, REQUESTS);
+
+  // The status filter carries no `orderBy`, and the ordering is done below.
+  //
+  // An equality plus an ordering on a different field is a composite index in
+  // Firestore, and a missing one does not degrade — the query throws
+  // failed-precondition and the screen shows nothing at all, which is how this
+  // first went wrong. Sorting a few hundred claims here costs nothing and
+  // removes a deploy step from the path between writing this and it working.
   const snapshot = await getDocs(
     filters.status && filters.status !== "all"
-      ? query(
-          base,
-          where("status", "==", filters.status),
-          orderBy("createdAt", "desc"),
-          limitTo(max),
-        )
+      ? query(base, where("status", "==", filters.status), limitTo(max))
       : query(base, orderBy("createdAt", "desc"), limitTo(max)),
   );
 
-  let rows = snapshot.docs.map((entry) => toRequest(entry.id, entry.data()));
+  let rows = snapshot.docs
+    .map((entry) => toRequest(entry.id, entry.data()))
+    .sort(
+      (a, b) => (b.createdAt?.toMillis() ?? 0) - (a.createdAt?.toMillis() ?? 0),
+    );
 
   if (filters.purpose && filters.purpose !== "all") {
     rows = rows.filter((row) => row.purpose === filters.purpose);
