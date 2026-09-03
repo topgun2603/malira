@@ -53,6 +53,21 @@ class MorePage extends ConsumerWidget {
           _GroupLabel(label: strings.appName),
 
           _Tile(
+            icon: Icons.storefront_outlined,
+            title: strings.services,
+            onTap: () => context.push('/services'),
+          ),
+          _Tile(
+            icon: Icons.badge_outlined,
+            title: strings.myBusinesses,
+            onTap: () => context.push('/services/mine'),
+          ),
+          _Tile(
+            icon: Icons.notifications_none,
+            title: strings.notices,
+            onTap: () => context.push('/notices'),
+          ),
+          _Tile(
             icon: Icons.search,
             title: strings.search,
             onTap: () => context.push('/search'),

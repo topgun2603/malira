@@ -320,6 +320,78 @@ class Strings {
     'நீலகிரி குடும்பங்களின் திருமணத் தகவல்கள், ஒவ்வொன்றும் பரிசீலனைக்குப் பிறகு வெளியிடப்படும்.',
   );
   String get browseProfiles => _t('Browse profiles', 'தகவல்களைப் பார்');
+  /* ------------------------------ services ------------------------------ */
+
+  String get services => _t('Wedding services', 'திருமண சேவைகள்');
+  String get everything => _t('Everything', 'அனைத்தும்');
+  String get seats => _t('Seats', 'இருக்கைகள்');
+  String get noServices => _t('Nothing here yet', 'இங்கே எதுவும் இல்லை');
+  String get noServicesBody => _t(
+    'Businesses appear here as they are approved. Try another category.',
+    'பரிசீலனைக்குப் பிறகு நிறுவனங்கள் இங்கே தோன்றும்.',
+  );
+  String get myBusinesses => _t('My businesses', 'என் நிறுவனங்கள்');
+  String get listYourBusiness =>
+      _t('List your business', 'உங்கள் நிறுவனத்தைப் பதிவு செய்');
+  String get inTheDirectory => _t('In the directory', 'பட்டியலில் உள்ளது');
+  String get notPaid => _t('Not paid', 'கட்டணம் நிலுவை');
+  String get paidUntil => _t('Paid until', 'செல்லுபடி');
+  String get pauseListing => _t('Pause', 'இடைநிறுத்து');
+  String get resumeListing => _t('Resume', 'மீண்டும் தொடங்கு');
+  String get sendForReview => _t('Send for review', 'பரிசீலனைக்கு அனுப்பு');
+  String get editListingWarns => _t(
+    'An edited listing is read again before it reappears. The time you have paid for is not affected.',
+    'திருத்திய பிறகு மீண்டும் பரிசீலிக்கப்படும். செலுத்திய கட்டணம் பாதிக்கப்படாது.',
+  );
+  String get approvedNeedsPayment => _t(
+    'Approved. It appears in the directory once it is paid for.',
+    'பரிசீலனை முடிந்தது. கட்டணம் செலுத்தியதும் பட்டியலில் தோன்றும்.',
+  );
+
+  /* ------------------------------ payments ------------------------------ */
+
+  String get payNow => _t('Pay', 'கட்டணம்');
+  String get paymentsClosed => _t(
+    'Payments are closed at the moment.',
+    'தற்போது கட்டணம் ஏற்க முடியாது.',
+  );
+  String get putThisInTheNote => _t(
+    'Put this in the payment note',
+    'இந்தக் குறியீட்டைக் குறிப்பில் சேர்க்கவும்',
+  );
+  String get openUpiApp => _t('Pay by UPI', 'UPI மூலம் செலுத்து');
+  String get afterYouPaid => _t('After you have paid', 'செலுத்திய பிறகு');
+  String get afterYouPaidBody => _t(
+    'Give us the reference number your bank shows, and a screenshot. A person checks it against the account.',
+    'வங்கி தரும் குறிப்பு எண்ணையும் திரைப்படத்தையும் இணைக்கவும். ஒரு நபர் சரிபார்ப்பார்.',
+  );
+  String get utrLabel => _t('UTR / transaction number', 'UTR / பரிவர்த்தனை எண்');
+  String get utrHint => _t(
+    'One number per transfer. A number already submitted is not accepted.',
+    'ஒரு பரிவர்த்தனைக்கு ஒரே எண். ஏற்கனவே அனுப்பிய எண் ஏற்கப்படாது.',
+  );
+  String get phoneForDesk => _t(
+    'The number the desk should call',
+    'அலுவலகம் அழைக்க வேண்டிய எண்',
+  );
+  String get screenshot => _t('Screenshot', 'திரைப்படம்');
+  String get sendToDesk => _t('Send to the desk', 'அனுப்பு');
+  String get duplicateUtr => _t(
+    'That reference number has already been submitted.',
+    'அந்த எண் ஏற்கனவே அனுப்பப்பட்டது.',
+  );
+  String get paymentSent => _t(
+    'Sent to the desk. You will hear back once it is checked.',
+    'அனுப்பப்பட்டது. சரிபார்த்த பிறகு தெரிவிக்கப்படும்.',
+  );
+  String get myPayments => _t('My payments', 'என் கட்டணங்கள்');
+  String get waitingOnDesk => _t(
+    'A person is checking it against the account.',
+    'ஒரு நபர் சரிபார்க்கிறார்.',
+  );
+  String get notices => _t('Notices', 'அறிவிப்புகள்');
+  String get noNotices => _t('Nothing yet', 'இன்னும் எதுவும் இல்லை');
+
   String get clearSearch => _t('Clear search', 'தேடலை அழி');
   String get matrimonySearchHint => _t(
     'Search name, work or town',

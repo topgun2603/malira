@@ -19,6 +19,10 @@ import 'ui/news/notifications_page.dart';
 import 'ui/news/saved_page.dart';
 import 'ui/matrimony/edit_profile_page.dart';
 import 'ui/matrimony/matrimony_home_page.dart';
+import 'ui/services/my_services_page.dart';
+import 'ui/services/notices_page.dart';
+import 'ui/services/service_detail_page.dart';
+import 'ui/services/services_page.dart';
 import 'ui/matrimony/profile_detail_page.dart';
 import 'ui/news/search_page.dart';
 import 'ui/onboarding/onboarding_page.dart';
@@ -202,6 +206,35 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/account',
         parentNavigatorKey: _rootKey,
         builder: (context, state) => const AccountPage(),
+      ),
+
+      // The directory is a pushed route rather than a sixth tab: the bottom
+      // bar already carries five, and a sixth turns every label into an
+      // abbreviation on the phones this readership actually holds.
+      //
+      // `/services/mine` is declared before `/services/:id` for the same
+      // reason `edit` comes before `:uid` below — otherwise "mine" is read as
+      // somebody's listing id.
+      GoRoute(
+        path: '/services',
+        parentNavigatorKey: _rootKey,
+        builder: (context, state) => const ServicesPage(),
+      ),
+      GoRoute(
+        path: '/services/mine',
+        parentNavigatorKey: _rootKey,
+        builder: (context, state) => const MyServicesPage(),
+      ),
+      GoRoute(
+        path: '/services/:id',
+        parentNavigatorKey: _rootKey,
+        builder: (context, state) =>
+            ServiceDetailPage(id: state.pathParameters['id']!),
+      ),
+      GoRoute(
+        path: '/notices',
+        parentNavigatorKey: _rootKey,
+        builder: (context, state) => const NoticesPage(),
       ),
 
       // `/matrimony/edit` is declared before `/matrimony/:uid` so "edit" is

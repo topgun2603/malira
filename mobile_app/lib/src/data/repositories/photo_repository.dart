@@ -20,6 +20,24 @@ import '../models/article.dart';
 /// protection that actually matters is not the Storage rule — it is that a
 /// restricted photo's URL lives in the private Firestore subcollection and is
 /// never sent to a client that has not earned it.
+/// Which bucket folder an upload lands in.
+///
+/// Not cosmetic. `matrimony/**` is readable only by a signed-in account and
+/// `vendors/**` is readable by anyone, because a directory photograph has to
+/// load for a family who has never signed in — a hall uploaded into the
+/// matrimony folder would have pictures invisible to exactly the people it was
+/// paid to reach. `payments/**` is write-only for the payer, since a proof is
+/// the audit trail for money that has already been granted against it.
+enum PhotoBucket {
+  matrimony('matrimony'),
+  vendor('vendors'),
+  paymentProof('payments');
+
+  const PhotoBucket(this.folder);
+
+  final String folder;
+}
+
 class PhotoRepository {
   PhotoRepository(this._storage);
 
@@ -55,6 +73,7 @@ class PhotoRepository {
     required File file,
     required String uid,
     ValueChanged<double>? onProgress,
+    PhotoBucket bucket = PhotoBucket.matrimony,
   }) async {
     // JPEG on every platform, matching the web uploader.
     //
@@ -93,7 +112,7 @@ class PhotoRepository {
     final name =
         '${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}'
         '-${_suffix()}.$extension';
-    final path = 'matrimony/$uid/$name';
+    final path = '${bucket.folder}/$uid/$name';
     final reference = _storage.ref(path);
 
     final task = reference.putData(
