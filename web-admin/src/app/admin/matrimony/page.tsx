@@ -24,6 +24,7 @@ import {
   ModerationTable,
   type ModerationFilterState,
 } from "@/components/matrimony/moderation-table";
+import { ProfileReview } from "@/components/matrimony/profile-review";
 import {
   useModerateProfile,
   useModerationPage,
@@ -36,6 +37,7 @@ const QUEUES: Array<{ value: MatrimonyStatus | "all"; label: string }> = [
   { value: "pending", label: "Awaiting review" },
   { value: "approved", label: "Live" },
   { value: "rejected", label: "Sent back" },
+  { value: "paused", label: "Suspended" },
   { value: "all", label: "All" },
 ];
 
@@ -65,6 +67,24 @@ export default function MatrimonyModerationPage() {
 
   const [rejecting, setRejecting] = useState<MatrimonyProfile | null>(null);
   const [note, setNote] = useState("");
+  const [reviewing, setReviewing] = useState<MatrimonyProfile | null>(null);
+
+  /**
+   * One place every status change goes through.
+   *
+   * Sending back needs a note — the member is being asked to fix something and
+   * has to be told what — so it detours through the dialog. Everything else
+   * applies straight away.
+   */
+  function decide(profile: MatrimonyProfile, status: MatrimonyStatus) {
+    if (status === "rejected") {
+      setReviewing(null);
+      setRejecting(profile);
+      return;
+    }
+    moderate.mutate({ uid: profile.id, status });
+    setReviewing(null);
+  }
 
   function reject() {
     if (!rejecting) return;
@@ -181,14 +201,20 @@ export default function MatrimonyModerationPage() {
               filters={filters}
               onFiltersChange={setFilters}
               busy={moderate.isPending}
-              onApprove={(profile) =>
-                moderate.mutate({ uid: profile.id, status: "approved" })
-              }
+              onApprove={(profile) => decide(profile, "approved")}
               onReject={(profile) => setRejecting(profile)}
+              onReview={setReviewing}
             />
           )}
         </TabsContent>
       </Tabs>
+
+      <ProfileReview
+        profile={reviewing}
+        onClose={() => setReviewing(null)}
+        onDecide={decide}
+        busy={moderate.isPending}
+      />
 
       <Alert>
         <Info />

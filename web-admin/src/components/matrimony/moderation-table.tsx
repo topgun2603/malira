@@ -15,6 +15,7 @@ import {
   ArrowUp,
   Check,
   ChevronsUpDown,
+  Eye,
   HeartHandshake,
   ImageOff,
   Search,
@@ -184,6 +185,7 @@ export function ModerationTable({
   busy,
   onApprove,
   onReject,
+  onReview,
 }: {
   page: ServerPage<MatrimonyProfile>;
   filters: ModerationFilterState;
@@ -191,6 +193,8 @@ export function ModerationTable({
   busy: boolean;
   onApprove: (profile: MatrimonyProfile) => void;
   onReject: (profile: MatrimonyProfile) => void;
+  /** Opens the full listing. The row buttons decide; this is how you look. */
+  onReview: (profile: MatrimonyProfile) => void;
 }) {
   const { search, gender, marital } = filters;
   const profiles = page.items;
@@ -290,6 +294,15 @@ export function ModerationTable({
             const profile = row.original;
             return (
               <div className="flex justify-end gap-2">
+                {/* Reading comes before deciding, so it leads. */}
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onReview(profile)}
+                >
+                  <Eye className="size-4" />
+                  Review
+                </Button>
                 {profile.status !== "approved" && (
                   <Button size="sm" disabled={busy} onClick={() => onApprove(profile)}>
                     <Check className="size-4" />
@@ -312,7 +325,7 @@ export function ModerationTable({
           },
         }),
       ]),
-    [busy, onApprove, onReject],
+    [busy, onApprove, onReject, onReview],
   );
 
   const data = profiles.length > 0 ? profiles : EMPTY;
