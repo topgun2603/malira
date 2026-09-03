@@ -283,6 +283,54 @@ export async function reviewVendor(
 }
 
 /** Paid placement, granted by the desk rather than bought at checkout. */
+/**
+ * Takes a listing down, or puts it back, without judging it.
+ *
+ * Distinct from rejecting: a paused listing has done nothing wrong — the hall
+ * is booked out for the season, or the desk is waiting on a renewal — and a
+ * rejection note would have to say something untrue. Pausing leaves
+ * `paidUntil` alone, so the term keeps running and resuming costs the vendor
+ * nothing.
+ */
+export async function setVendorPaused(
+  id: string,
+  paused: boolean,
+  by: string,
+): Promise<void> {
+  await updateDoc(vendorDoc(id), {
+    status: paused ? "paused" : "approved",
+    reviewedBy: by,
+    reviewedAt: Timestamp.now(),
+    updatedAt: serverTimestamp(),
+  });
+}
+
+/**
+ * Puts time on a listing without a payment passing through the site.
+ *
+ * Most of this district pays in cash or hands over a UPI reference in person,
+ * and the desk still has to be able to say "this one is paid for". Extends
+ * from the current expiry when there is time left, so granting early never
+ * costs a vendor days they already have — the same arithmetic the payment
+ * review does, because a term granted by hand and a term bought online are the
+ * same thing to the directory.
+ */
+export async function grantVendorTerm(
+  id: string,
+  months: number,
+  current: Vendor["paidUntil"],
+): Promise<void> {
+  const now = new Date();
+  const base = current && current.toDate() > now ? current.toDate() : now;
+  const until = new Date(base);
+  until.setMonth(until.getMonth() + months);
+
+  await updateDoc(vendorDoc(id), {
+    paidUntil: Timestamp.fromDate(until),
+    updatedAt: serverTimestamp(),
+  });
+}
+
 export async function setVendorFeatured(
   id: string,
   featured: boolean,

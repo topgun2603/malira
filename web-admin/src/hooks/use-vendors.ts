@@ -13,12 +13,14 @@ import {
   reviewVendor,
   saveVendor,
   searchVendors,
+  grantVendorTerm,
   setVendorFeatured,
+  setVendorPaused,
   setVendorOwnStatus,
   type VendorDraft,
   type VendorFilters,
 } from "@/lib/api/vendors";
-import type { VendorStatus } from "@/lib/types";
+import type { Vendor, VendorStatus } from "@/lib/types";
 
 const keys = {
   all: ["vendors"] as const,
@@ -132,6 +134,40 @@ export function useReviewVendor() {
           : "Sent back with your note.",
       );
       queryClient.invalidateQueries({ queryKey: keys.all });
+    },
+    onError: (error) => toast.error(friendlyError(error)),
+  });
+}
+
+export function useSetVendorPaused() {
+  const queryClient = useQueryClient();
+  const { firebaseUser } = useAuth();
+  return useMutation({
+    mutationFn: ({ id, paused }: { id: string; paused: boolean }) =>
+      setVendorPaused(id, paused, firebaseUser?.uid ?? ""),
+    onSuccess: (_, { paused }) => {
+      toast.success(paused ? "Paused. It is off the directory." : "Back in the directory.");
+      queryClient.invalidateQueries({ queryKey: ["vendors"] });
+    },
+    onError: (error) => toast.error(friendlyError(error)),
+  });
+}
+
+export function useGrantVendorTerm() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      months,
+      current,
+    }: {
+      id: string;
+      months: number;
+      current: Vendor["paidUntil"];
+    }) => grantVendorTerm(id, months, current),
+    onSuccess: () => {
+      toast.success("Term granted. The listing is paid up.");
+      queryClient.invalidateQueries({ queryKey: ["vendors"] });
     },
     onError: (error) => toast.error(friendlyError(error)),
   });
