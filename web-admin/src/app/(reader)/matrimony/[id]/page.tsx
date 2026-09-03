@@ -35,10 +35,12 @@ import { FadeIn } from "@/components/motion/primitives";
 import { SignInGate } from "@/components/matrimony/sign-in-gate";
 import { HoroscopeView } from "@/components/matrimony/horoscope-uploader";
 import { useEntitlement } from "@/hooks/use-subscription";
+import { useAppSettings } from "@/hooks/use-phase2";
 import { useAuth } from "@/components/providers/auth-provider";
 import {
   useContact,
   useProfile,
+  useRestrictedPhotos,
   useReportProfile,
   useSendInterest,
   useSentInterests,
@@ -59,7 +61,13 @@ function Detail() {
   const { data: received } = useReceivedInterests();
   const sendInterest = useSendInterest();
   const reportProfile = useReportProfile();
-  const { premium, remaining } = useEntitlement();
+  const { premium, remaining, subscription } = useEntitlement();
+  const { data: settings } = useAppSettings();
+
+  // The plan this reader bought carried the photo override. Stamped on the
+  // subscription at purchase, so turning the switch off on the plan later
+  // does not take away what somebody already paid for.
+  const canSeeRestricted = premium && subscription?.photoOverride === true;
 
   const [reportOpen, setReportOpen] = useState(false);
   const [reason, setReason] = useState("");
@@ -69,6 +77,21 @@ function Detail() {
   const matched = profile ? isMatched(all, uid, profile.id) : false;
   const alreadySent = (sent ?? []).find(
     (interest) => interest.toUid === params.id && interest.status === "sent",
+  );
+
+  const isOwn = profile?.id === uid;
+
+  // Only worth asking when the photographs are actually being withheld: the
+  // profile says it has some and the public document carries none.
+  //
+  // Placed above the loading and not-found returns because it is a hook: React
+  // needs the same hooks in the same order on every render, and the query
+  // already no-ops on an undefined uid.
+  const withheld =
+    Boolean(profile?.hasPhotos) && (profile?.photos.length ?? 0) === 0;
+  const { data: unlockedPhotos } = useRestrictedPhotos(
+    profile?.id,
+    canSeeRestricted && withheld && !matched && !isOwn,
   );
 
   // Only requested once a match exists; the rules would refuse it otherwise.
@@ -104,8 +127,11 @@ function Detail() {
   }
 
   const age = ageFrom(profile.dob);
-  const isOwn = profile.id === uid;
-  const photos = matched && contact ? contact.photos : profile.photos;
+
+  const photos =
+    matched && contact
+      ? contact.photos
+      : (unlockedPhotos?.length ? unlockedPhotos : profile.photos);
 
   const facts: Array<[string, string]> = [
     ["Age", age !== null ? `${age}` : "—"],
@@ -116,6 +142,7 @@ function Detail() {
     ["Occupation", profile.occupation || "—"],
     ["Works in", profile.workLocation || "—"],
     ["Hometown", profile.hometown || "—"],
+    ["Seemay", profile.seemay || "—"],
     ["Mother tongue", profile.motherTongue || "—"],
     ["Posted by", POSTED_BY_LABELS[profile.postedBy]],
   ];
@@ -227,6 +254,30 @@ function Detail() {
                     Contact details are shown only after this side accepts your
                     interest.
                   </p>
+                  {/*
+                    A subscriber whose plan unlocked the photographs still does
+                    not get the number. The desk does the introduction instead,
+                    so a member's phone number is only ever released by the
+                    member — which is the promise the restricted setting made.
+                  */}
+                  {canSeeRestricted && settings?.contactPhone && (
+                    <div className="bg-muted/60 space-y-1.5 rounded-lg p-3">
+                      <p className="text-sm font-medium">
+                        In a hurry? Ask the desk.
+                      </p>
+                      <a
+                        href={`tel:${settings.contactPhone}`}
+                        className="flex items-center gap-2 text-sm hover:underline"
+                      >
+                        <Phone className="text-primary size-4" />
+                        {settings.contactPhone}
+                      </a>
+                      <p className="text-muted-foreground text-xs">
+                        Your plan shows you the photographs. For the number, call
+                        the desk and they will pass your request on.
+                      </p>
+                    </div>
+                  )}
                   <Button
                     className="w-full"
                     disabled={

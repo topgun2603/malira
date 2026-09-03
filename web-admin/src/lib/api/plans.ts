@@ -38,6 +38,7 @@ function toPlan(id: string, data: Record<string, unknown>): SubscriptionPlan {
     months: (data.months as number) ?? 1,
     features: (data.features as string[]) ?? [],
     featuresTa: (data.featuresTa as string[]) ?? [],
+    photoOverride: Boolean(data.photoOverride),
     highlight: Boolean(data.highlight),
     active: data.active !== false,
     order: (data.order as number) ?? 1,
@@ -68,6 +69,7 @@ export interface PlanDraft {
   months: number;
   features: string[];
   featuresTa: string[];
+  photoOverride: boolean;
   highlight: boolean;
   active: boolean;
   order: number;
@@ -110,6 +112,10 @@ export async function seedDefaultPlan(): Promise<number> {
       "வரம்பற்ற விருப்பங்கள்",
       "உங்கள் பக்கத்தைப் பார்த்தவர்கள் எண்ணிக்கை",
     ],
+    // Off on the seeded plan. Letting a stranger past somebody's photo setting
+    // is a decision for the association to take deliberately, not something a
+    // fresh project should arrive already doing.
+    photoOverride: false,
     highlight: true,
     active: true,
     order: 1,

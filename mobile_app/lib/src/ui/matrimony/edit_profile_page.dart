@@ -119,6 +119,9 @@ class _EditFormState extends ConsumerState<_EditForm> {
           ? 'தொடர்பு எண் தேவை.'
           : 'A contact number is required.';
     }
+    if (_draft.seemay.trim().isEmpty) {
+      return strings.isTamil ? 'சீமை தேவை.' : 'A seemay is required.';
+    }
 
     final age = _draft.age;
     if (age == null || age < _draft.gender.minimumAge) {
@@ -336,6 +339,11 @@ class _EditFormState extends ConsumerState<_EditForm> {
               onChanged: (value) => _draft = _draft.copyWith(hometown: value),
             ),
             _Text(
+              controller: _controller('seemay', _draft.seemay),
+              label: strings.seemay,
+              onChanged: (value) => _draft = _draft.copyWith(seemay: value),
+            ),
+            _Text(
               controller: _controller('motherTongue', _draft.motherTongue),
               label: strings.motherTongue,
               onChanged: (value) =>
@@ -395,16 +403,22 @@ class _EditFormState extends ConsumerState<_EditForm> {
                   setState(() => _draft = _draft.copyWith(photos: photos)),
             ),
 
-            const SizedBox(height: Gap.lg),
-            _Label(text: strings.photoPrivacy),
-            _ChoiceRow<PhotoVisibility>(
-              values: PhotoVisibility.values,
-              selected: _draft.photoVisibility,
-              label: (value) => strings.pick(value.label, value.labelTa),
-              onSelect: (value) => setState(
-                () => _draft = _draft.copyWith(photoVisibility: value),
+            // Only a bride's listing gets the choice. A groom's photographs
+            // are always visible to signed-in members, so showing him a picker
+            // would be showing him a control that does nothing — worse than
+            // saying plainly that this one is not his to set.
+            if (_draft.gender != Gender.male) ...[
+              const SizedBox(height: Gap.lg),
+              _Label(text: strings.photoPrivacy),
+              _ChoiceRow<PhotoVisibility>(
+                values: PhotoVisibility.values,
+                selected: _draft.photoVisibility,
+                label: (value) => strings.pick(value.label, value.labelTa),
+                onSelect: (value) => setState(
+                  () => _draft = _draft.copyWith(photoVisibility: value),
+                ),
               ),
-            ),
+            ],
 
             const SizedBox(height: Gap.lg),
             _GroupHeading(text: strings.contactDetails),

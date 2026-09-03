@@ -182,6 +182,7 @@ export function ProfileReview({
               <Field label="Occupation" value={profile.occupation} />
               <Field label="Works in" value={profile.workLocation} />
               <Field label="Hometown" value={profile.hometown} />
+              <Field label="Seemay" value={profile.seemay} />
             </dl>
           </Group>
 

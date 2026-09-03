@@ -146,6 +146,7 @@ class MatrimonyProfile {
     required this.occupation,
     required this.workLocation,
     required this.hometown,
+    required this.seemay,
     required this.motherTongue,
     required this.about,
     required this.fatherOccupation,
@@ -182,6 +183,7 @@ class MatrimonyProfile {
       occupation: data.str('occupation'),
       workLocation: data.str('workLocation'),
       hometown: data.str('hometown'),
+      seemay: data.str('seemay'),
       motherTongue: data.str('motherTongue'),
       about: data.str('about'),
       fatherOccupation: data.str('fatherOccupation'),
@@ -220,6 +222,13 @@ class MatrimonyProfile {
   final String occupation;
   final String workLocation;
   final String hometown;
+
+  /// The Badaga territorial division the family belongs to.
+  ///
+  /// Required when a listing is created — it is the first thing an older
+  /// relative asks about a proposal. Listings written before the field existed
+  /// simply carry an empty string.
+  final String seemay;
   final String motherTongue;
   final String about;
   final String fatherOccupation;
@@ -308,6 +317,17 @@ class MatrimonyContact {
       },
     );
   }
+
+  /// The same contact with its photographs filled in from the document they
+  /// now live in. Kept here so the repository can rejoin the two without every
+  /// caller learning that they were ever apart.
+  MatrimonyContact withPhotos(List<ArticleImage> photos) => MatrimonyContact(
+    phone: phone,
+    email: email,
+    photos: photos,
+    horoscopeNote: horoscopeNote,
+    horoscopeImage: horoscopeImage,
+  );
 
   final String phone;
   final String email;
@@ -443,6 +463,7 @@ class Subscription {
     required this.planId,
     required this.planName,
     required this.status,
+    required this.photoOverride,
     required this.expiresAt,
   });
 
@@ -452,6 +473,7 @@ class Subscription {
       planId: data.strOrNull('planId'),
       planName: data.str('planName'),
       status: data.str('status', 'none'),
+      photoOverride: data.flag('photoOverride'),
       expiresAt: data.time('expiresAt'),
     );
   }
@@ -460,6 +482,7 @@ class Subscription {
     planId: null,
     planName: '',
     status: 'none',
+    photoOverride: false,
     expiresAt: null,
   );
 
@@ -467,6 +490,16 @@ class Subscription {
   final String? planId;
   final String planName;
   final String status;
+
+  /// Whether the plan this account bought unlocks restricted photographs.
+  ///
+  /// Copied onto the subscription at purchase rather than read through to the
+  /// plan, because the security rules read this field and a rule cannot follow
+  /// planId without a second lookup on every photograph. It also means turning
+  /// the switch off on a plan leaves existing subscribers holding what they
+  /// paid for.
+  final bool photoOverride;
+
   final DateTime? expiresAt;
 
   /// A subscription that exists but has run out is not a subscription.
@@ -476,4 +509,7 @@ class Subscription {
     if (expiry == null) return false;
     return expiry.isAfter(DateTime.now());
   }
+
+  /// Paid up, on a plan the desk marked as unlocking restricted photographs.
+  bool get canSeeRestrictedPhotos => isPremium && photoOverride;
 }

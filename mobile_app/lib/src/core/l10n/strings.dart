@@ -342,6 +342,12 @@ class Strings {
   String get awaitingYourAnswer =>
       _t('Waiting for your answer', 'உங்கள் பதிலுக்காக');
   String get contactDetails => _t('Contact details', 'தொடர்பு விவரங்கள்');
+  String get askTheDesk =>
+      _t('In a hurry? Ask the desk.', 'அவசரமா? அலுவலகத்தைத் த௄டரவு கொள்ளுங்கள்.');
+  String get askTheDeskBody => _t(
+    'Your plan shows you the photographs. For the number, call the desk and they will pass your request on.',
+    'உங்கள் திட்டத்தில் படங்கள் தெரியும். தொலைபேசி எண்ணிற்கு அலுவலகத்தைக் கூப்பிடுங்கள்.',
+  );
   String get contactLocked => _t(
     'Contact details appear once both sides have accepted.',
     'இருவரும் ஏற்றுக்கொண்ட பிறகே தொடர்பு விவரங்கள் தெரியும்.',
@@ -359,6 +365,7 @@ class Strings {
   String get height => _t('Height', 'உயரம்');
   String get anyGender => _t('Anyone', 'அனைவரும்');
   String get hometown => _t('Hometown', 'ஊர்');
+  String get seemay => _t('Seemay', 'சீமை');
   String get education => _t('Education', 'கல்வி');
   String get occupation => _t('Occupation', 'தொழில்');
   String get workLocation => _t('Works in', 'பணியிடம்');

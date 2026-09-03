@@ -68,6 +68,28 @@ service cloud.firestore {
       return interestAccepted(viewer, owner) || interestAccepted(owner, viewer);
     }
 
+    // A paid-up reader whose plan carried the photo override.
+    //
+    // Reads the flag off the subscription rather than following planId to the
+    // plan: rules cannot join, and a second lookup on every photograph would be
+    // paid by every reader on every profile. `grantSubscription` stamps it at
+    // purchase, which also means switching a plan's override off later does not
+    // retroactively take away what somebody already bought.
+    //
+    // The expiry is checked here and not just the status, because nothing
+    // rewrites `status` to 'expired' on its own the moment a plan runs out.
+    function subscription() {
+      return get(/databases/$(database)/documents/subscriptions/$(request.auth.uid)).data;
+    }
+
+    function hasPhotoOverride() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/subscriptions/$(request.auth.uid))
+        && subscription().status == 'active'
+        && subscription().photoOverride == true
+        && subscription().expiresAt > request.time;
+    }
+
     // The reader-facing app only ever sees published stories.
     function isPublished() {
       return resource.data.status == 'published';
@@ -328,6 +350,23 @@ service cloud.firestore {
         || matched(request.auth.uid, uid)
       );
       allow write: if request.auth.uid == uid || isMatrimonyModerator();
+    }
+
+    // Restricted photographs, and only photographs.
+    //
+    // They were moved out of `private/contact` to make this rule possible at
+    // all: contact holds a phone number and an email address, and there is no
+    // field-level security in Firestore, so anything that could read the
+    // photographs there could read the phone number beside them. Two documents
+    // is the only way to hand out one without the other.
+    //
+    // Firestore grants access when ANY matching rule allows it, so this block
+    // widens the one above for this single document rather than replacing it:
+    // owner, moderator and matched still read it, and a subscriber whose plan
+    // carried the override now does too. Contact is untouched — a subscriber
+    // who wants to reach this member is given the desk's number instead.
+    match /matrimonyProfiles/{uid}/private/photos {
+      allow read: if hasPhotoOverride();
     }
 
     match /matrimonyInterests/{interestId} {

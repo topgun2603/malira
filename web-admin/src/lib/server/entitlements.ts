@@ -30,6 +30,7 @@ export async function grantSubscription(input: {
   const plan = planSnapshot.data() ?? {};
   const months = Number(plan.months) || 1;
   const planName = String(plan.name ?? "Premium");
+  const photoOverride = plan.photoOverride === true;
 
   const ref = db.collection("subscriptions").doc(input.uid);
   const existing = await ref.get();
@@ -55,6 +56,9 @@ export async function grantSubscription(input: {
       planId: input.planId,
       planName,
       status: "active",
+      // Denormalised on purpose: the rules read this field, and a rule that had
+      // to follow planId would cost an extra document read on every photograph.
+      photoOverride,
       startedAt: existing.exists
         ? (existing.data()?.startedAt ?? Timestamp.fromDate(now))
         : Timestamp.fromDate(now),

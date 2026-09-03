@@ -10,6 +10,7 @@ import '../../data/models/article.dart';
 import '../../data/models/matrimony.dart';
 import '../../state/auth.dart';
 import '../../state/matrimony.dart';
+import '../../state/providers.dart';
 import '../../state/preferences.dart';
 import '../common/app_image.dart';
 import '../common/states.dart';
@@ -179,6 +180,7 @@ class _ProfileBody extends ConsumerWidget {
         _Row(label: strings.occupation, value: profile.occupation),
         _Row(label: strings.workLocation, value: profile.workLocation),
         _Row(label: strings.hometown, value: profile.hometown),
+        _Row(label: strings.seemay, value: profile.seemay),
         _Row(label: strings.motherTongue, value: profile.motherTongue),
         _Row(
           label: strings.postedBy,
@@ -259,11 +261,23 @@ class _PhotoGalleryState extends ConsumerState<_PhotoGallery> {
         me == profile.id || ref.watch(matchedUidsProvider).contains(profile.id);
 
     // Public photos first; the private set only when it is readable at all.
+    //
+    // Two ways to have earned it now. An accepted interest reads them through
+    // the contact document as before; a subscriber on an overriding plan reads
+    // the photographs alone, without the phone number that used to sit beside
+    // them in the same document.
+    final subscription = ref.watch(subscriptionProvider).value;
+    final byPlan = subscription?.canSeeRestrictedPhotos ?? false;
+
     var photos = profile.photos;
     if (photos.isEmpty && unlocked) {
       photos =
           ref.watch(matrimonyContactProvider(profile.id)).value?.photos ??
           const [];
+    }
+    if (photos.isEmpty && !unlocked && byPlan && profile.hasPhotos) {
+      photos =
+          ref.watch(restrictedPhotosProvider(profile.id)).value ?? const [];
     }
 
     if (photos.isEmpty) {
@@ -391,6 +405,15 @@ class _ContactBlock extends ConsumerWidget {
     final matched = ref.watch(matchedUidsProvider).contains(profile.id);
     final isMine = me == profile.id;
 
+    // A plan can unlock the photographs; it never unlocks the number. The desk
+    // does the introduction instead, so a member's phone number is still only
+    // ever released by the member — which is the promise the restricted setting
+    // made, and the reason this shows a switchboard rather than a shortcut.
+    final byPlan =
+        ref.watch(subscriptionProvider).value?.canSeeRestrictedPhotos ?? false;
+    final desk = ref.watch(appSettingsProvider).value?.contactPhone.trim() ?? '';
+    final showDesk = byPlan && desk.isNotEmpty;
+
     if (!matched && !isMine) {
       return Container(
         padding: const EdgeInsets.all(Gap.lg),
@@ -416,6 +439,23 @@ class _ContactBlock extends ConsumerWidget {
                     strings.contactLocked,
                     style: context.texts.bodySmall,
                   ),
+                  if (showDesk) ...[
+                    const SizedBox(height: Gap.md),
+                    Text(strings.askTheDesk, style: context.texts.titleSmall),
+                    const SizedBox(height: 2),
+                    _ContactLine(
+                      icon: Icons.call_outlined,
+                      value: desk,
+                      onTap: () => launchUrl(
+                        Uri.parse('tel:$desk'),
+                        mode: LaunchMode.externalApplication,
+                      ),
+                    ),
+                    Text(
+                      strings.askTheDeskBody,
+                      style: context.texts.bodySmall,
+                    ),
+                  ],
                 ],
               ),
             ),

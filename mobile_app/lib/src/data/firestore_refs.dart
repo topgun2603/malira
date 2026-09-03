@@ -94,6 +94,16 @@ class Refs {
   DocumentReference<Map<String, dynamic>> matrimonyContact(String uid) =>
       matrimonyProfile(uid).collection('private').doc('contact');
 
+  /// Restricted photographs, apart from the contact document.
+  ///
+  /// They used to sit beside the phone number, which made "show a subscriber
+  /// the photographs" and "show a subscriber the phone number" the same
+  /// permission. They are not the same question, and there is no field-level
+  /// security to separate them, so they are separate documents instead. This
+  /// one's read rule also admits a subscriber whose plan carried the override.
+  DocumentReference<Map<String, dynamic>> matrimonyPhotos(String uid) =>
+      matrimonyProfile(uid).collection('private').doc('photos');
+
   /// `settings/matrimony` — the free allowance, edited in the admin.
   DocumentReference<Map<String, dynamic>> get matrimonySettings =>
       _db.collection(Collections.settings).doc('matrimony');

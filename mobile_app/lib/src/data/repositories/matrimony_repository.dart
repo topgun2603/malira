@@ -3,6 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../firestore_refs.dart';
 import '../models/article.dart';
 import '../models/matrimony.dart';
+import '../models/parsing.dart';
 
 /// Filters the browse screen applies.
 ///
@@ -92,6 +93,7 @@ class ProfileDraft {
     this.occupation = '',
     this.workLocation = '',
     this.hometown = '',
+    this.seemay = '',
     this.motherTongue = '',
     this.about = '',
     this.fatherOccupation = '',
@@ -124,6 +126,7 @@ class ProfileDraft {
       occupation: profile.occupation,
       workLocation: profile.workLocation,
       hometown: profile.hometown,
+      seemay: profile.seemay,
       motherTongue: profile.motherTongue,
       about: profile.about,
       fatherOccupation: profile.fatherOccupation,
@@ -154,6 +157,7 @@ class ProfileDraft {
   final String occupation;
   final String workLocation;
   final String hometown;
+  final String seemay;
   final String motherTongue;
   final String about;
   final String fatherOccupation;
@@ -180,6 +184,7 @@ class ProfileDraft {
     String? occupation,
     String? workLocation,
     String? hometown,
+    String? seemay,
     String? motherTongue,
     String? about,
     String? fatherOccupation,
@@ -207,6 +212,7 @@ class ProfileDraft {
       occupation: occupation ?? this.occupation,
       workLocation: workLocation ?? this.workLocation,
       hometown: hometown ?? this.hometown,
+      seemay: seemay ?? this.seemay,
       motherTongue: motherTongue ?? this.motherTongue,
       about: about ?? this.about,
       fatherOccupation: fatherOccupation ?? this.fatherOccupation,
@@ -270,9 +276,35 @@ class MatrimonyRepository {
     try {
       final snapshot = await _refs.matrimonyContact(uid).get();
       if (!snapshot.exists) return null;
-      return MatrimonyContact.fromDoc(snapshot);
+      final base = MatrimonyContact.fromDoc(snapshot);
+      // Photographs moved to their own document. Everyone who has earned the
+      // contact has also earned them, so they are folded back in here rather
+      // than made every screen's problem.
+      final photos = await restrictedPhotos(uid);
+      return photos.isEmpty ? base : base.withPhotos(photos);
     } on FirebaseException catch (error) {
       if (error.code == 'permission-denied') return null;
+      rethrow;
+    }
+  }
+
+  /// The photographs a listing withheld.
+  ///
+  /// Readable by the owner, a moderator, anyone the owner accepted, and a
+  /// subscriber whose plan carried the photo override. Everyone else gets
+  /// permission-denied, which is the rules working, so it reads as an empty
+  /// list rather than an error.
+  Future<List<ArticleImage>> restrictedPhotos(String uid) async {
+    try {
+      final snapshot = await _refs.matrimonyPhotos(uid).get();
+      final data = snapshot.data();
+      if (data == null) return const [];
+      return data
+          .maps('photos')
+          .map(ArticleImage.fromMap)
+          .toList(growable: false);
+    } on FirebaseException catch (error) {
+      if (error.code == 'permission-denied') return const [];
       rethrow;
     }
   }
@@ -342,7 +374,12 @@ class MatrimonyRepository {
   /// reviewed in the form it is now in. The rules enforce this too — this is
   /// the client agreeing with them rather than discovering it as an error.
   Future<void> saveProfile(String uid, ProfileDraft draft) async {
-    final restricted = draft.photoVisibility == PhotoVisibility.onAccept;
+    // Men are never restricted: the association's rule, and the form does not
+    // offer them the choice. Mirrors `photosAreRestricted` on the web, which is
+    // the copy the moderation desk writes through.
+    final restricted =
+        draft.gender != Gender.male &&
+        draft.photoVisibility == PhotoVisibility.onAccept;
     final batch = _refs.batch();
 
     batch.set(_refs.matrimonyProfile(uid), {
@@ -360,6 +397,7 @@ class MatrimonyRepository {
       'occupation': draft.occupation.trim(),
       'workLocation': draft.workLocation.trim(),
       'hometown': draft.hometown.trim(),
+      'seemay': draft.seemay.trim(),
       'motherTongue': draft.motherTongue.trim(),
       'about': draft.about.trim(),
       'fatherOccupation': draft.fatherOccupation.trim(),
@@ -390,12 +428,20 @@ class MatrimonyRepository {
     batch.set(_refs.matrimonyContact(uid), {
       'phone': draft.phone.trim(),
       'email': draft.email.trim(),
-      // The private document always holds the full set, restricted or not.
-      'photos': draft.photos.map((photo) => photo.toMap()).toList(),
       'horoscopeNote': draft.horoscopeNote.trim(),
       'horoscopeImage': draft.horoscopeImage?.toMap(),
       'updatedAt': FieldValue.serverTimestamp(),
     });
+
+    // Emptied when the photographs are public, not just left behind: otherwise
+    // a listing that had been restricted would keep a copy readable through the
+    // override long after its owner decided to show everybody anyway.
+    batch.set(_refs.matrimonyPhotos(uid), {
+      'photos': restricted
+          ? draft.photos.map((photo) => photo.toMap()).toList()
+          : const <Map<String, dynamic>>[],
+      'updatedAt': FieldValue.serverTimestamp(),
+    }, SetOptions(merge: true));
 
     await batch.commit();
   }
@@ -456,6 +502,7 @@ class MatrimonyRepository {
     // thing that must not survive a withdrawal.
     try {
       await _refs.matrimonyContact(uid).delete();
+      await _refs.matrimonyPhotos(uid).delete();
     } catch (_) {
       // Nothing there, or already gone.
     }

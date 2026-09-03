@@ -77,6 +77,7 @@ const EMPTY: ProfileDraft = {
   occupation: "",
   workLocation: "",
   hometown: "",
+  seemay: "",
   motherTongue: "Badaga",
   about: "",
   fatherOccupation: "",
@@ -139,6 +140,7 @@ function MyMatrimony() {
           occupation: profile.occupation,
           workLocation: profile.workLocation,
           hometown: profile.hometown,
+          seemay: profile.seemay,
           motherTongue: profile.motherTongue,
           about: profile.about,
           fatherOccupation: profile.fatherOccupation,
@@ -424,6 +426,23 @@ function MyMatrimony() {
                     onChange={(event) => set("hometown", event.target.value)}
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="seemay">
+                    Seemay <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="seemay"
+                    required
+                    aria-required
+                    value={current.seemay}
+                    placeholder="Porangadu, Mekunadu, Thodhanadu…"
+                    onChange={(event) => set("seemay", event.target.value)}
+                  />
+                  <p className="text-muted-foreground text-xs">
+                    The seemay your family belongs to. Asked of every proposal,
+                    so it is required.
+                  </p>
+                </div>
               </div>
 
               <div className="space-y-2">
@@ -499,24 +518,41 @@ function MyMatrimony() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="photoVisibility">Who can see the photos</Label>
-                <Select
-                  value={current.photoVisibility}
-                  onValueChange={(v) => set("photoVisibility", v as PhotoVisibility)}
-                >
-                  <SelectTrigger id="photoVisibility" className="w-full">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PHOTO_VISIBILITY.map((value) => (
-                      <SelectItem key={value} value={value}>
-                        {PHOTO_VISIBILITY_LABELS[value]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {/*
+                Only shown to women. A man's photographs are always visible to
+                signed-in members, so offering him the choice would be offering
+                a control that does nothing — which is worse than saying plainly
+                that the choice is not his to make.
+              */}
+              {current.gender === "male" ? (
+                <p className="text-muted-foreground text-sm">
+                  Photographs on a groom&rsquo;s listing are visible to every
+                  signed-in member.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  <Label htmlFor="photoVisibility">Who can see the photos</Label>
+                  <Select
+                    value={current.photoVisibility}
+                    onValueChange={(v) => set("photoVisibility", v as PhotoVisibility)}
+                  >
+                    <SelectTrigger id="photoVisibility" className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PHOTO_VISIBILITY.map((value) => (
+                        <SelectItem key={value} value={value}>
+                          {PHOTO_VISIBILITY_LABELS[value]}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-muted-foreground text-xs">
+                    Restricting them still lets subscribers on a plan the desk
+                    has marked see them. Your phone number is never included.
+                  </p>
+                </div>
+              )}
 
               <MatrimonyPhotos
                 uid={firebaseUser?.uid ?? ""}

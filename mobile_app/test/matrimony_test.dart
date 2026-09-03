@@ -195,6 +195,7 @@ void main() {
         planId: 'six-months',
         planName: 'Six months',
         status: 'active',
+        photoOverride: false,
         expiresAt: DateTime.now().subtract(const Duration(days: 1)),
       );
       expect(expired.isPremium, isFalse);
@@ -205,6 +206,7 @@ void main() {
         planId: 'six-months',
         planName: 'Six months',
         status: 'active',
+        photoOverride: false,
         expiresAt: DateTime.now().add(const Duration(days: 30)),
       );
       expect(live.isPremium, isTrue);
@@ -218,6 +220,7 @@ void main() {
           planId: null,
           planName: '',
           status: 'active',
+          photoOverride: false,
           expiresAt: DateTime.now().add(const Duration(days: 30)),
         ).isPremium,
         isFalse,
@@ -304,6 +307,7 @@ MatrimonyProfile _height(int cm) => MatrimonyProfile(
   occupation: '',
   workLocation: '',
   hometown: '',
+  seemay: 'Porangadu',
   motherTongue: '',
   about: '',
   fatherOccupation: '',

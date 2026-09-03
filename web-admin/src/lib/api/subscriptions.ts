@@ -19,6 +19,7 @@ export async function getSubscription(uid: string): Promise<Subscription | null>
     planId: (data.planId as string) ?? null,
     planName: (data.planName as string) ?? "",
     status: (data.status as Subscription["status"]) ?? "none",
+    photoOverride: data.photoOverride === true,
     startedAt: (data.startedAt as Subscription["startedAt"]) ?? null,
     expiresAt: (data.expiresAt as Subscription["expiresAt"]) ?? null,
     provider: (data.provider as Subscription["provider"]) ?? null,

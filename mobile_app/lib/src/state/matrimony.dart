@@ -1,6 +1,7 @@
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../data/models/article.dart';
 import '../data/models/matrimony.dart';
 import '../data/repositories/matrimony_repository.dart';
 import '../data/repositories/photo_repository.dart';
@@ -87,6 +88,17 @@ final myMatrimonyProfileProvider = StreamProvider<MatrimonyProfile?>((ref) {
 final matrimonyContactProvider =
     FutureProvider.autoDispose.family<MatrimonyContact?, String>((ref, uid) {
       return ref.watch(matrimonyRepositoryProvider).contact(uid);
+    });
+
+/// The photographs a listing withheld, for a viewer entitled to them.
+///
+/// Separate from [matrimonyContactProvider] because the two are no longer the
+/// same permission: a subscriber on an overriding plan may read the photographs
+/// without ever being allowed the phone number beside them. Reads as an empty
+/// list when the rules refuse, which is the ordinary case.
+final restrictedPhotosProvider = FutureProvider.autoDispose
+    .family<List<ArticleImage>, String>((ref, uid) {
+      return ref.watch(matrimonyRepositoryProvider).restrictedPhotos(uid);
     });
 
 final sentInterestsProvider = StreamProvider<List<MatrimonyInterest>>((ref) {

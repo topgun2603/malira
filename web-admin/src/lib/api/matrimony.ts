@@ -57,6 +57,31 @@ const REPORTS = "matrimonyReports";
 
 const profileDoc = (uid: string) => doc(db, PROFILES, uid);
 const contactDoc = (uid: string) => doc(db, PROFILES, uid, "private", "contact");
+
+/**
+ * Restricted photographs, kept apart from the contact document.
+ *
+ * They used to sit beside the phone number. Firestore has no field-level
+ * security, so that made "let a subscriber see the photographs" the same
+ * question as "let a subscriber see the phone number", and those have very
+ * different answers. Two documents is what makes one grantable alone.
+ */
+const photosDoc = (uid: string) => doc(db, PROFILES, uid, "private", "photos");
+
+/**
+ * Whether a listing keeps its photographs off the public document.
+ *
+ * Men are never restricted. That is the association's rule, not a default:
+ * the setting exists because women asked for it, and leaving a control on a
+ * man's form that quietly does nothing would be worse than not offering it.
+ * The form hides the picker for men for the same reason.
+ */
+export function photosAreRestricted(
+  gender: "male" | "female",
+  visibility: PhotoVisibility,
+): boolean {
+  return gender !== "male" && visibility === "on_accept";
+}
 const interestId = (fromUid: string, toUid: string) => `${fromUid}__${toUid}`;
 
 function toProfile(id: string, data: Record<string, unknown>): MatrimonyProfile {
@@ -76,6 +101,7 @@ function toProfile(id: string, data: Record<string, unknown>): MatrimonyProfile 
     occupation: (data.occupation as string) ?? "",
     workLocation: (data.workLocation as string) ?? "",
     hometown: (data.hometown as string) ?? "",
+    seemay: (data.seemay as string) ?? "",
     motherTongue: (data.motherTongue as string) ?? "",
     about: (data.about as string) ?? "",
     fatherOccupation: (data.fatherOccupation as string) ?? "",
@@ -123,6 +149,7 @@ export interface ProfileDraft {
   occupation: string;
   workLocation: string;
   hometown: string;
+  seemay: string;
   motherTongue: string;
   about: string;
   fatherOccupation: string;
@@ -142,6 +169,7 @@ export function validateProfile(draft: ProfileDraft): string | null {
   if (!draft.name.trim()) return "A name is required.";
   if (!draft.dob) return "A date of birth is required.";
   if (!draft.phone.trim()) return "A contact number is required.";
+  if (!draft.seemay.trim()) return "A seemay is required.";
 
   const age = ageFrom(Timestamp.fromDate(draft.dob));
   const minimum = MIN_AGE_BY_GENDER[draft.gender];
@@ -158,15 +186,33 @@ export async function getProfile(uid: string): Promise<MatrimonyProfile | null> 
   return toProfile(snapshot.id, snapshot.data());
 }
 
+/**
+ * The photographs a listing withheld.
+ *
+ * Readable by the owner, a moderator, anyone the owner has accepted, and a
+ * subscriber whose plan carried the override. Anyone else gets
+ * permission-denied from the rules, which is the point: this is the only copy,
+ * and the URLs never reach a client that has not earned them.
+ */
+export async function getRestrictedPhotos(uid: string): Promise<ArticleImage[]> {
+  const snapshot = await getDoc(photosDoc(uid));
+  if (!snapshot.exists()) return [];
+  return (snapshot.data().photos as ArticleImage[]) ?? [];
+}
+
 /** Throws permission-denied unless the caller has earned the contact details. */
 export async function getContact(uid: string): Promise<MatrimonyContact | null> {
   const snapshot = await getDoc(contactDoc(uid));
   if (!snapshot.exists()) return null;
   const data = snapshot.data();
+  // Photographs live in their own document now, but every caller that had
+  // earned the contact had also earned the photographs, so they are merged back
+  // here rather than made every screen's problem.
+  const photos = await getRestrictedPhotos(uid).catch(() => [] as ArticleImage[]);
   return {
     phone: (data.phone as string) ?? "",
     email: (data.email as string) ?? "",
-    photos: (data.photos as ArticleImage[]) ?? [],
+    photos: photos.length > 0 ? photos : ((data.photos as ArticleImage[]) ?? []),
     horoscopeNote: (data.horoscopeNote as string) ?? "",
     horoscopeImage: (data.horoscopeImage as ArticleImage) ?? null,
   };
@@ -183,7 +229,7 @@ export async function saveProfile(
   uid: string,
   draft: ProfileDraft,
 ): Promise<void> {
-  const restricted = draft.photoVisibility === "on_accept";
+  const restricted = photosAreRestricted(draft.gender, draft.photoVisibility);
 
   // A merge write would otherwise stamp createdAt again on every edit, so a
   // long-standing profile would keep looking brand new.
@@ -212,6 +258,7 @@ export async function saveProfile(
       occupation: draft.occupation,
       workLocation: draft.workLocation,
       hometown: draft.hometown,
+      seemay: draft.seemay.trim(),
       motherTongue: draft.motherTongue,
       about: draft.about,
       fatherOccupation: draft.fatherOccupation,
@@ -243,9 +290,21 @@ export async function saveProfile(
     {
       phone: draft.phone,
       email: draft.email,
-      photos: draft.photos,
       horoscopeNote: draft.horoscopeNote,
       horoscopeImage: draft.horoscopeImage,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true },
+  );
+
+  // The withheld copy. Written even when the photographs are public, so that
+  // flipping the setting back to restricted does not need the files again — and
+  // emptied when they are public, so nothing is readable through the override
+  // that the owner has since decided to show everybody anyway.
+  batch.set(
+    photosDoc(uid),
+    {
+      photos: restricted ? draft.photos : [],
       updatedAt: serverTimestamp(),
     },
     { merge: true },
@@ -294,6 +353,7 @@ export async function resumeOwnListing(
 export async function deleteProfile(uid: string): Promise<void> {
   // The subcollection has to go first: deleting a parent leaves children.
   await deleteDoc(contactDoc(uid)).catch(() => undefined);
+  await deleteDoc(photosDoc(uid)).catch(() => undefined);
   await deleteDoc(profileDoc(uid));
 }
 

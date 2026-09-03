@@ -60,6 +60,7 @@ const EMPTY: PlanDraft = {
   months: 6,
   features: [""],
   featuresTa: [],
+  photoOverride: false,
   highlight: false,
   active: true,
   order: 1,
@@ -105,6 +106,7 @@ export default function PlansPage() {
       months: plan.months,
       features: plan.features.length ? plan.features : [""],
       featuresTa: plan.featuresTa,
+      photoOverride: plan.photoOverride,
       highlight: plan.highlight,
       active: plan.active,
       order: plan.order,
@@ -474,6 +476,27 @@ export default function PlansPage() {
                 The contact-on-mutual-accept line is added automatically, and is
                 the same on every plan.
               </p>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <Label htmlFor="photoOverride">
+                  Show restricted photographs
+                </Label>
+                <p className="text-muted-foreground text-xs">
+                  Holders of this plan see photographs on listings that chose
+                  &ldquo;only after an accepted interest&rdquo;. Phone and email
+                  stay private &mdash; they are shown the desk&rsquo;s number
+                  instead, and the desk passes the request on.
+                </p>
+              </div>
+              <Switch
+                id="photoOverride"
+                checked={draft.photoOverride}
+                onCheckedChange={(checked) =>
+                  setDraft({ ...draft, photoOverride: checked })
+                }
+              />
             </div>
 
             <div className="flex items-center justify-between gap-4">

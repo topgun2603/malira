@@ -640,6 +640,16 @@ export interface MatrimonyProfile {
   occupation: string;
   workLocation: string;
   hometown: string;
+  /**
+   * The seemay the family belongs to.
+   *
+   * A Badaga territorial division, and the first thing an older relative asks
+   * about a proposal — which is why it is required rather than optional. Free
+   * text on purpose: the seemes are well known but not a list this codebase
+   * should be the authority on, and a closed dropdown that is missing one
+   * would simply lock those families out.
+   */
+  seemay: string;
   motherTongue: string;
   about: string;
 
@@ -752,6 +762,19 @@ export interface SubscriptionPlan {
   months: number;
   features: string[];
   featuresTa: string[];
+  /**
+   * Lets this plan's holders see photographs the owner restricted.
+   *
+   * Off by default, and deliberately per-plan rather than global: the desk may
+   * well want it on the six-month plan and not on a trial, and a single switch
+   * would force the same answer for both.
+   *
+   * It does NOT unlock phone or email. A subscriber who wants to reach a
+   * restricted listing is given the desk's number and the desk passes the
+   * request on, so the member's own number is still only ever released by the
+   * member.
+   */
+  photoOverride: boolean;
   /** Marks the plan the desk wants to push. */
   highlight: boolean;
   active: boolean;
@@ -792,6 +815,17 @@ export interface Subscription {
   planId: string | null;
   planName: string;
   status: "active" | "expired" | "none";
+  /**
+   * Copied from the plan at the moment of purchase, not read through to it.
+   *
+   * The security rules have to answer "may this reader see that photograph?"
+   * and a rule cannot follow planId to the plan document without a second
+   * lookup on every single read. Stamping it here costs one field and makes
+   * the rule a single get. It also means turning the switch off on a plan
+   * leaves existing subscribers holding what they paid for, which is the
+   * fairer of the two behaviours.
+   */
+  photoOverride: boolean;
   startedAt: Timestamp | null;
   expiresAt: Timestamp | null;
   provider: "razorpay" | null;

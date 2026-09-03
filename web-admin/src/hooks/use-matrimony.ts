@@ -22,6 +22,7 @@ import {
   sendInterest,
   setOwnStatus,
   resumeOwnListing,
+  getRestrictedPhotos,
   withdrawInterest,
   type MatrimonyFilters,
   type ModerationFilters,
@@ -159,6 +160,22 @@ export function useProfileSearch(filters: MatrimonyFilters) {
     queryKey: matrimonyKeys.search(scoped),
     queryFn: () => searchProfiles(scoped),
     enabled: Boolean(firebaseUser),
+    staleTime: 60_000,
+  });
+}
+
+/**
+ * Photographs a listing withheld, for a reader whose plan unlocks them.
+ *
+ * Gated behind [enabled] rather than fetched always: for everybody else the
+ * rules answer permission-denied, and firing that request on every profile
+ * would fill the console with failures that are the system working correctly.
+ */
+export function useRestrictedPhotos(uid: string | undefined, enabled: boolean) {
+  return useQuery({
+    queryKey: [...matrimonyKeys.profile(uid ?? ""), "restricted-photos"],
+    queryFn: () => getRestrictedPhotos(uid as string),
+    enabled: Boolean(uid) && enabled,
     staleTime: 60_000,
   });
 }
